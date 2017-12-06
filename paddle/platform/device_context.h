@@ -95,7 +95,7 @@ class CUDADeviceContext : public DeviceContext {
   cudnnHandle_t cudnn_handle() const;
 
   /*! \brief  Return cuda stream in the device context. */
-  cudaStream_t stream() const;
+  hipStream_t stream() const;
 
  private:
   GPUPlace place_;
@@ -103,7 +103,7 @@ class CUDADeviceContext : public DeviceContext {
   std::unique_ptr<Eigen::GpuDevice> eigen_device_;
   std::unique_ptr<EigenCudaStreamDevice> eigen_stream_;
 
-  cudaStream_t stream_;
+  hipStream_t stream_;
   cudnnHandle_t cudnn_handle_;
   cublasHandle_t cublas_handle_;
 };
