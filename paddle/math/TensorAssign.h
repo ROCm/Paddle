@@ -29,7 +29,7 @@ class TensorAssignOp {
 public:
   explicit TensorAssignOp(const LhsType& lhs, const RhsType& rhs)
       : lhs_(lhs), rhs_(rhs) {
-#ifndef __CUDA_ARCH__
+#ifndef __HIP_DEVICE_COMPILE__
     CHECK_EQ(lhs_.getWidth(), rhs_.getWidth());
     CHECK_EQ(lhs_.getHeight(), rhs_.getHeight());
     CHECK_EQ(lhs_.useGpu(), rhs_.useGpu());
@@ -77,7 +77,7 @@ void AssignCpuEvaluate(int height,
   }
 }
 
-#ifdef __NVCC__
+#ifdef __HIPCC__
 template <typename Assign, typename... AssignOp>
 __global__ void AssignGpuEvaluate1(const int border,
                                    Assign assign,
@@ -131,7 +131,7 @@ void AssignEvaluate(Assign&& assign, AssignOp&&... args) {
   }
 
   if (useGpu_) {
-#ifdef __NVCC__
+#ifdef __HIPCC__
     if (isContiguous_) {
       int size = height * width;
       int blockSize = size <= 1024 ? size : 1024;

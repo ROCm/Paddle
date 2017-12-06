@@ -48,7 +48,7 @@ inline void TensorCpuApply(LeftType& lhs, const RightType& rhs) {
   }
 }
 
-#ifdef __NVCC__
+#ifdef __HIPCC__
 template <typename LeftType, typename RightType>
 __global__ void TensorElementWiseOp(LeftType lhs,
                                     RightType rhs,
