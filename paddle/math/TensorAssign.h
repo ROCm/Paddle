@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /* Copyright (c) 2016 PaddlePaddle Authors. All Rights Reserve.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -135,7 +136,7 @@ void AssignEvaluate(Assign&& assign, AssignOp&&... args) {
       int size = height * width;
       int blockSize = size <= 1024 ? size : 1024;
       int gridSize = (size + 1024 - 1) / 1024;
-      AssignGpuEvaluate1<<<gridSize, blockSize, 0, STREAM_DEFAULT>>>(
+      hipLaunchKernelGGL((AssignGpuEvaluate1), dim3(gridSize), dim3(blockSize), 0, STREAM_DEFAULT, 
           size, assign, args...);
     } else {
       int blockSizeY = std::min(32, (int)height);
@@ -144,7 +145,7 @@ void AssignEvaluate(Assign&& assign, AssignOp&&... args) {
       int gridSizeY = std::min(32, (int)(height + blockSizeY - 1) / blockSizeY);
       dim3 threads(blockSizeX, blockSizeY);
       dim3 grid(gridSizeX, gridSizeY);
-      AssignGpuEvaluate2<<<grid, threads, 0, STREAM_DEFAULT>>>(
+      hipLaunchKernelGGL((AssignGpuEvaluate2), dim3(grid), dim3(threads), 0, STREAM_DEFAULT, 
           height, width, assign, args...);
     }
 
