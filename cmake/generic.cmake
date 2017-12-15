@@ -88,6 +88,7 @@
 #
 
 # including binary directory for generated headers.
+include(FindHIP)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(NOT APPLE AND NOT ANDROID)
@@ -229,6 +230,7 @@ function(cc_test TARGET_NAME)
     add_executable(${TARGET_NAME} ${cc_test_SRCS})
     target_link_libraries(${TARGET_NAME} ${cc_test_DEPS} paddle_gtest_main paddle_memory gtest gflags)
     add_dependencies(${TARGET_NAME} ${cc_test_DEPS} paddle_gtest_main paddle_memory gtest gflags)
+    target_link_libraries(${TARGET_NAME} ${CUDA_LIBRARIES} ${CUDA_rt_LIBRARY} ${CUDNN_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${NCCL_LIBRARY})
     add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 endfunction(cc_test)
@@ -281,6 +283,8 @@ function(nv_binary TARGET_NAME)
   endif()
 endfunction(nv_binary)
 
+
+
 function(nv_test TARGET_NAME)
   if (WITH_GPU AND WITH_TESTING)
     set(options "")
@@ -290,6 +294,7 @@ function(nv_test TARGET_NAME)
     HIP_ADD_EXECUTABLE(${TARGET_NAME} ${nv_test_SRCS})
     target_link_libraries(${TARGET_NAME} ${nv_test_DEPS} paddle_gtest_main paddle_memory gtest gflags)
     add_dependencies(${TARGET_NAME} ${nv_test_DEPS} paddle_gtest_main paddle_memory gtest gflags)
+    target_link_libraries(${TARGET_NAME} ${nv_test_DEPS} -lcublas_static -lcudart_static -lculibos -L/usr/local/cuda/lib64 -lpthread -ldl -lrt)
     add_test(${TARGET_NAME} ${TARGET_NAME})
   endif()
 endfunction(nv_test)
