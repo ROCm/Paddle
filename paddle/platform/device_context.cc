@@ -58,7 +58,7 @@ class EigenCudaStreamDevice : public Eigen::StreamInterface {
 
   const cudaStream_t& stream() const override { return *stream_; }
 
-  const cudaDeviceProp& deviceProperties() const override {
+  const hipDeviceProp_t& deviceProperties() const override {
     return *device_prop_;
   }
 
@@ -72,7 +72,7 @@ class EigenCudaStreamDevice : public Eigen::StreamInterface {
 
   void* scratchpad() const override {
     if (scratch_ == NULL) {
-      scratch_ = allocate(Eigen::kCudaScratchSize + sizeof(unsigned int));
+      scratch_ = allocate(Eigen::kHipScratchSize + sizeof(unsigned int));
     }
     return scratch_;
   }
@@ -80,7 +80,7 @@ class EigenCudaStreamDevice : public Eigen::StreamInterface {
   unsigned int* semaphore() const override {
     if (semaphore_ == NULL) {
       char* scratch =
-          static_cast<char*>(scratchpad()) + Eigen::kCudaScratchSize;
+          static_cast<char*>(scratchpad()) + Eigen::kHipScratchSize;
       semaphore_ = reinterpret_cast<unsigned int*>(scratch);
       PADDLE_ENFORCE(
           cudaMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_));
@@ -91,7 +91,7 @@ class EigenCudaStreamDevice : public Eigen::StreamInterface {
  private:
   GPUPlace place_;
   const cudaStream_t* stream_;         // not owned;
-  const cudaDeviceProp* device_prop_;  // not owned;
+  const hipDeviceProp_t* device_prop_;  // not owned;
   mutable void* scratch_;
   mutable unsigned int* semaphore_;
 };
