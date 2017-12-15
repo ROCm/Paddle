@@ -279,7 +279,7 @@ void hl_free_mem_device(void *dest_d) {
   CHECK_NOTNULL(dest_d);
 
   hipError_t err = hipFree(dest_d);
-  CHECK(hipSuccess == err/* || cudaErrorCudartUnloading == err*/)
+  CHECK(hipSuccess == err || hipErrorUnknown == err /* || cudaErrorCudartUnloading == err*/)
       << hl_get_device_error_string();
 }
 
@@ -296,7 +296,7 @@ void hl_free_mem_host(void *dest_h) {
   CHECK_NOTNULL(dest_h);
 
   hipError_t err = hipHostFree(dest_h);
-  CHECK(hipSuccess == err/* || cudaErrorCudartUnloading == err*/)
+  CHECK(hipSuccess == err || hipErrorUnknown == err/* || cudaErrorCudartUnloading == err*/)
       << hl_get_device_error_string();
 }
 
