@@ -121,6 +121,7 @@ function(link_paddle_exe TARGET_NAME)
     endif()
 
     add_dependencies(${TARGET_NAME} ${external_project_dependencies})
+    target_link_libraries(${TARGET_NAME} "-L/opt/rocm/lib/ -lMIOpen -lmiopengemm -lhipblas -lhiprand -lrocblas -lhip_hcc")
 endfunction()
 
 # link_paddle_test

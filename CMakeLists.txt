@@ -39,10 +39,10 @@ endif()
 include(simd)
 
 ################################ Configurations #######################################
-option(WITH_GPU         "Compile PaddlePaddle with NVIDIA GPU"          ${CUDA_FOUND})
+option(WITH_GPU         "Compile PaddlePaddle with NVIDIA GPU"          ON)
 option(WITH_AVX         "Compile PaddlePaddle with AVX intrinsics"      ${AVX_FOUND})
 option(WITH_MKL         "Compile PaddlePaddle with MKL support."        ${AVX_FOUND})
-option(WITH_DSO         "Compile PaddlePaddle with dynamic linked CUDA" ON)
+option(WITH_DSO         "Compile PaddlePaddle with dynamic linked CUDA" OFF)
 option(WITH_TESTING     "Compile PaddlePaddle with unit testing"        ON)
 option(WITH_SWIG_PY     "Compile PaddlePaddle with inference api"       ON)
 option(WITH_STYLE_CHECK "Compile PaddlePaddle with style check"         ON)
@@ -142,7 +142,7 @@ include(external/nccl)
 include(external/cares)
 include(external/grpc)
 
-include(cudnn)              # set cudnn libraries, must before configure
+#include(cudnn)              # set cudnn libraries, must before configure
 include(configure)          # add paddle env configuration
 include(generic)            # simplify cmake module
 include(package)            # set paddle packages
@@ -160,6 +160,13 @@ include_directories("${PADDLE_SOURCE_DIR}/paddle/cuda/include")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/proto")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/go/pserver/client/c")
 include_directories(${Boost_INCLUDE_DIRS})
+include_directories("/opt/rocm/include")
+include_directories("/opt/rocm/hipblas/include")
+include_directories("/opt/rocm/hiprand/include")
+include_directories("/opt/rocm/rocrand/include")
+include_directories("/opt/rocm/rccl/include")
+include_directories("/opt/rocm/thrust")
+include_directories("/opt/rocm/hipeigen")
 
 set(EXTERNAL_LIBS
     ${GFLAGS_LIBRARIES}

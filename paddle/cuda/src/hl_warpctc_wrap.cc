@@ -89,7 +89,8 @@ void hl_warpctc_init(const size_t blank,
   if (useGpu) {
 #ifdef __HIPCC__
     options->loc = CTC_GPU;
-    options->stream = STREAM_DEFAULT;
+    //options->stream = STREAM_DEFAULT;
+    //WARP
 #else
     LOG(FATAL) << "[warpctc init] GPU is not enabled.";
 #endif

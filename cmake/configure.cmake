@@ -64,21 +64,14 @@ if(NOT WITH_GPU)
 else()
     add_definitions(-DPADDLE_WITH_CUDA)
 
-    FIND_PACKAGE(CUDA REQUIRED)
+    #if(NOT CUDNN_FOUND)
+    #    message(FATAL_ERROR "Paddle needs cudnn to compile")
+    #endif()
 
-    if(${CUDA_VERSION_MAJOR} VERSION_LESS 7)
-        message(FATAL_ERROR "Paddle needs CUDA >= 7.0 to compile")
-    endif()
-
-    if(NOT CUDNN_FOUND)
-        message(FATAL_ERROR "Paddle needs cudnn to compile")
-    endif()
-
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler ${SIMD_FLAG}")
+    #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler ${SIMD_FLAG}")
 
     # Include cuda and cudnn
-    include_directories(${CUDNN_INCLUDE_DIR})
-    include_directories(${CUDA_TOOLKIT_INCLUDE})
+    #include_directories(${CUDNN_INCLUDE_DIR})
 endif(NOT WITH_GPU)
 
 if (WITH_MKLML AND MKLML_IOMP_LIB)
@@ -90,8 +83,8 @@ if (WITH_MKLML AND MKLML_IOMP_LIB)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPENMP_FLAGS}")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SIMD_FLAG} -D__HIP_PLATFORM_NVCC__")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIMD_FLAG} -D__HIP_PLATFORM_NVCC__")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SIMD_FLAG} -D__HIP_PLATFORM_HCC__")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIMD_FLAG} -D__HIP_PLATFORM_HCC__")
 
 if(WITH_GOLANG)
   # we need to symlink Paddle directory into GOPATH. If we

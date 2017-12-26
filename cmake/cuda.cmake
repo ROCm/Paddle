@@ -138,28 +138,11 @@ function(select_nvcc_arch_flags out_variable)
   set(${out_variable}_readable ${nvcc_archs_readable} PARENT_SCOPE)
 endfunction()
 
-message(STATUS "CUDA detected: " ${CUDA_VERSION})
-if (${CUDA_VERSION} LESS 7.0)
-  set(paddle_known_gpu_archs ${paddle_known_gpu_archs})
-elseif (${CUDA_VERSION} LESS 8.0) # CUDA 7.x
-  set(paddle_known_gpu_archs ${paddle_known_gpu_archs7})
-  list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED")
-  list(APPEND CUDA_NVCC_FLAGS "-D__STRICT_ANSI__")
-elseif (${CUDA_VERSION} LESS 9.0) # CUDA 8.x
-  set(paddle_known_gpu_archs ${paddle_known_gpu_archs8})
-  list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED")
-  list(APPEND CUDA_NVCC_FLAGS "-D__STRICT_ANSI__")
-  # CUDA 8 may complain that sm_20 is no longer supported. Suppress the
-  # warning for now.
-  list(APPEND CUDA_NVCC_FLAGS "-Wno-deprecated-gpu-targets")
-endif()
-
-include_directories(${CUDA_INCLUDE_DIRS})
 include_directories("/opt/rocm/include")
 
-list(APPEND EXTERNAL_LIBS ${CUDA_LIBRARIES} ${CUDA_rt_LIBRARY})
+#list(APPEND EXTERNAL_LIBS ${CUDA_LIBRARIES} ${CUDA_rt_LIBRARY})
 if(NOT WITH_DSO)
-    list(APPEND EXTERNAL_LIBS ${CUDNN_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${NCCL_LIBRARY})
+    #list(APPEND EXTERNAL_LIBS ${CUDNN_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${NCCL_LIBRARY})
 endif(NOT WITH_DSO)
 
 # setting nvcc arch flags
@@ -178,7 +161,8 @@ list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC")
 # Set :expt-relaxed-constexpr to suppress Eigen warnings
 list(APPEND CUDA_NVCC_FLAGS "--expt-relaxed-constexpr")
 
-set(HIP_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -DPADDLE_WITH_CUDA" )
+set(HIP_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -fPIC -DPADDLE_WITH_CUDA" )
+set(HIP_HCC_FLAGS "${HIP_HCC_FLAGS} -fPIC -DPADDLE_WITH_CUDA" )
 
 if(CMAKE_BUILD_TYPE  STREQUAL "Debug")
     list(APPEND CUDA_NVCC_FLAGS  ${CMAKE_CXX_FLAGS_DEBUG})

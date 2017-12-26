@@ -1,3 +1,4 @@
+include(FindHIP)
 set(AVX_SOURCES
     src/hl_math.cc
     src/hl_avx_functions.cc
@@ -15,9 +16,9 @@ else()
 endif()
 
 set(CUDA_CXX_WITH_GPU_SOURCES
-    src/hl_cuda_cublas.cc
+    src/hl_cuda_device.cc
     src/hl_cuda_cudnn.cc
-    src/hl_cuda_device.cc)
+    src/hl_cuda_cublas.cc)
 
 if(WITH_GPU)
     set(CUDA_CXX_SOURCES

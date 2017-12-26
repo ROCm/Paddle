@@ -35,7 +35,7 @@ function cmake_gen() {
         -DCMAKE_BUILD_TYPE=Release
         ${PYTHON_FLAGS}
         -DWITH_DOC=OFF
-        -DWITH_GPU=${WITH_GPU:-OFF}
+        -DWITH_GPU=${WITH_GPU:-ON}
         -DWITH_DISTRIBUTE=${WITH_DISTRIBUTE:-OFF}
         -DWITH_MKL=${WITH_MKL:-ON}
         -DWITH_AVX=${WITH_AVX:-OFF}
@@ -57,7 +57,7 @@ EOF
         -DCMAKE_BUILD_TYPE=Release \
         ${PYTHON_FLAGS} \
         -DWITH_DOC=OFF \
-        -DWITH_GPU=${WITH_GPU:-OFF} \
+        -DWITH_GPU=ON \
         -DWITH_DISTRIBUTE=${WITH_DISTRIBUTE:-OFF} \
         -DWITH_MKL=${WITH_MKL:-ON} \
         -DWITH_AVX=${WITH_AVX:-OFF} \

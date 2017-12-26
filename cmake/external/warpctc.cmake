@@ -47,7 +47,7 @@ ExternalProject_Add(
                     -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                     -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
                     -DCMAKE_INSTALL_PREFIX=${WARPCTC_INSTALL_DIR}
-                    -DWITH_GPU=${WITH_GPU}
+                    -DWITH_GPU=OFF
                     -DWITH_OMP=${USE_OMP}
                     -DWITH_TORCH=OFF
                     -DCMAKE_DISABLE_FIND_PACKAGE_Torch=ON
