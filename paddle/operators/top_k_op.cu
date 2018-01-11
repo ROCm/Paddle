@@ -149,7 +149,7 @@ __device__ __forceinline__ void ThreadGetTopK(Pair<T> topk[], int& beam,
         if (k < MaxLength - beam) {
           topk[k] = topk[k + beam];
         } else {
-          topk[k].set(-INFINITY, -1);
+          topk[k].set(-FP_INFINITE, -1);
         }
       }
       if (!is_empty) {
@@ -180,7 +180,7 @@ __device__ __forceinline__ void ThreadGetTopK(Pair<T> topk[], int& beam,
         if (k < MaxLength - beam) {
           topk[k] = topk[k + beam];
         } else {
-          topk[k].set(-INFINITY, -1);
+          topk[k].set(-FP_INFINITE, -1);
         }
       }
       if (!is_empty) {
@@ -266,7 +266,7 @@ __global__ void KeMatrixTopK(T* output, int output_stride, int64_t* indices,
   bool firststep = true;
 
   for (int k = 0; k < MaxLength; k++) {
-    topk[k].set(-INFINITY, -1);
+    topk[k].set(-FP_INFINITE, -1);
   }
   while (k) {
     ThreadGetTopK<T, MaxLength, BlockSize>(topk, beam, k,
