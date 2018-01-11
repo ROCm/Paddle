@@ -103,10 +103,10 @@ struct SparseAdagradFunctor<platform::GPUPlace, T> {
     dim3 threads(block_size, 1);
     dim3 grid1(1, grad_rows.size());
 
-    MergeGradKernel<
-        T, 256><<<grid1, threads, 0,
+    hipLaunchKernelGGL((MergeGradKernel<
+        T, 256>), dim3(grid1), dim3(threads), 0,
                   reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                      .stream()>>>(grad_data, grad.rows().data(),
+                      .stream(), grad_data, grad.rows().data(),
                                    grad_merge_data, grad_merge->rows().data(),
                                    grad_merge->rows().size(), grad_width);
 
@@ -131,10 +131,10 @@ struct SparseAdagradFunctor<platform::GPUPlace, T> {
     auto* moment_data = moment->data<T>();
 
     dim3 grid2(1, merge_rows.size());
-    SparseAdagradFunctorKernel<
-        T, 256><<<grid2, threads, 0,
+    hipLaunchKernelGGL((SparseAdagradFunctorKernel<
+        T, 256>), dim3(grid2), dim3(threads), 0,
                   reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                      .stream()>>>(grad_merge_data, grad_merge->rows().data(),
+                      .stream(), grad_merge_data, grad_merge->rows().data(),
                                    lr, param_data, moment_data, grad_width,
                                    epsilon);
   }

@@ -97,9 +97,9 @@ class Im2ColFunctor<paddle::operators::math::ColFormat::kCFO,
     int block_y = (blocks + 512 - 1) / 512;
     dim3 threads(1024, 1);
     dim3 grid(block_x, block_y);
-    im2col<T><<<grid, threads, 0,
+    hipLaunchKernelGGL((im2col<T>), dim3(grid), dim3(threads), 0,
                 reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                    .stream()>>>(
+                    .stream(),
         im.data<T>(), num_outputs, im_height, im_width, dilation[0],
         dilation[1], filter_height, filter_width, stride[0], stride[1],
         padding[0], padding[1], col_height, col_width, col->data<T>());
@@ -204,9 +204,9 @@ class Col2ImFunctor<paddle::operators::math::ColFormat::kCFO,
 
     // To avoid involving atomic operations, we will launch one kernel per
     // bottom dimension, and then in the kernel add up the top dimensions.
-    col2im<T><<<grid, threads, 0,
+    hipLaunchKernelGGL((col2im<T>), dim3(grid), dim3(threads), 0,
                 reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                    .stream()>>>(
+                    .stream(),
         num_kernels, col.data<T>(), im_height, im_width, dilation[0],
         dilation[1], filter_height, filter_width, stride[0], stride[1],
         padding[0], padding[2], col_height, col_width, im->data<T>());
@@ -311,9 +311,9 @@ class Im2ColFunctor<paddle::operators::math::ColFormat::kOCF,
     int block_dim_z = 1024 / block_dim_x / block_dim_y;
     dim3 threads(block_dim_x, block_dim_y, std::min(block_dim_z, im_channels));
     dim3 grid(col_width, col_height);
-    im2colOCF<T><<<grid, threads, 0,
+    hipLaunchKernelGGL((im2colOCF<T>), dim3(grid), dim3(threads), 0,
                    reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                       .stream()>>>(
+                       .stream(),
         im.data<T>(), im_channels, im_height, im_width, filter_height,
         filter_width, stride[0], stride[1], padding[0], padding[1], col_height,
         col_width, col->data<T>());
@@ -410,9 +410,9 @@ class Col2ImFunctor<paddle::operators::math::ColFormat::kOCF,
     int block_dim_z = 1024 / block_dim_x / block_dim_y;
     dim3 threads(block_dim_x, block_dim_y, std::min(block_dim_z, im_channels));
     dim3 grid(col_width, col_height);
-    col2imOCF<T><<<grid, threads, 0,
+    hipLaunchKernelGGL((col2imOCF<T>), dim3(grid), dim3(threads), 0,
                    reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                       .stream()>>>(
+                       .stream(),
         col.data<T>(), im_channels, im_height, im_width, filter_height,
         filter_width, stride[0], stride[1], padding[0], padding[1], col_height,
         col_width, im->data<T>());

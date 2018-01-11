@@ -354,8 +354,7 @@ void hl_context_projection_backward_weight(const real* out_grad,
   dim3 threads(threads_x, threads_y);
   dim3 grid(blocks_x, 1);
 
-  KeContextProjectionBackwardWeight<32,
-                                    32><<<grid, threads, 0, STREAM_DEFAULT>>>(
+  hipLaunchKernelGGL((KeContextProjectionBackwardWeight<32, 32>), dim3(grid), dim3(threads), 0, STREAM_DEFAULT,
       out_grad,
       sequence,
       w_grad,

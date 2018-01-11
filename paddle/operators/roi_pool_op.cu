@@ -146,8 +146,8 @@ class GPUROIPoolOpKernel : public framework::OpKernel<T> {
     int blocks = NumBlocks(output_size);
     int threads = kNumCUDAThreads;
 
-    GPUROIPoolForward<
-        T><<<blocks, threads, 0, ctx.cuda_device_context().stream()>>>(
+    hipLaunchKernelGGL((GPUROIPoolForward<
+        T>), dim3(blocks), dim3(threads), 0, ctx.cuda_device_context().stream(),
         output_size, in->data<T>(), rois->data<int64_t>(), spatial_scale,
         channels, height, width, pooled_height, pooled_width,
         out->mutable_data<T>(ctx.GetPlace()),
@@ -185,8 +185,8 @@ class GPUROIPoolGradOpKernel : public framework::OpKernel<T> {
       int threads = kNumCUDAThreads;
 
       if (output_grad_size > 0) {
-        GPUROIPoolBackward<
-            T><<<blocks, threads, 0, ctx.cuda_device_context().stream()>>>(
+        hipLaunchKernelGGL((GPUROIPoolBackward<
+            T>), dim3(blocks), dim3(threads), 0, ctx.cuda_device_context().stream(),
             output_grad_size, rois->data<int64_t>(), out_grad->data<T>(),
             argmax->data<int64_t>(), rois_num, spatial_scale, channels, height,
             width, pooled_height, pooled_width,

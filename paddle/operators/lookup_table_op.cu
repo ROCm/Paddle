@@ -75,9 +75,9 @@ class LookupTableCUDAKernel : public framework::OpKernel<T> {
 
     dim3 threads(128, 8);
     dim3 grids(8, 1);
-    LookupTable<
+    hipLaunchKernelGGL((LookupTable<
         T, 128, 8,
-        8><<<grids, threads, 0, context.cuda_device_context().stream()>>>(
+        8>), dim3(grids), dim3(threads), 0, context.cuda_device_context().stream(),
         output, table, ids, N, K, D);
   }
 };
@@ -135,9 +135,9 @@ class LookupTableGradCUDAKernel : public framework::OpKernel<T> {
 
       dim3 threads(128, 8);
       dim3 grids(8, 1);
-      LookupTableGrad<
+      hipLaunchKernelGGL((LookupTableGrad<
           T, 128, 8,
-          8><<<grids, threads, 0, context.cuda_device_context().stream()>>>(
+          8>), dim3(grids), dim3(threads), 0, context.cuda_device_context().stream(),
           d_table, d_output, ids, N, K, D);
     }
   }

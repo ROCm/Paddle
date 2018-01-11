@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /* Copyright (c) 2016 PaddlePaddle Authors. All Rights Reserve.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,16 +47,16 @@ struct GRUUnitFunctor<platform::GPUPlace, T> {
     }
 
     if (batch_size == 1) {
-      detail::KeGruForwardResetOutput<detail::forward::gru_resetOutput<T>,
+      hipLaunchKernelGGL((detail::KeGruForwardResetOutput<detail::forward::gru_resetOutput<T>,
                                       /* is_batch= */ false,
-                                      T><<<grid, threads, 0, stream>>>(
+                                      T>), dim3(grid), dim3(threads), 0, stream,
           detail::forward::gru_resetOutput<T>(), value.gate_value,
           value.reset_output_value, value.prev_out_value, frame_size,
           batch_size, active_gate);
     } else {
-      detail::KeGruForwardResetOutput<detail::forward::gru_resetOutput<T>,
+      hipLaunchKernelGGL((detail::KeGruForwardResetOutput<detail::forward::gru_resetOutput<T>,
                                       /* is_batch= */ true,
-                                      T><<<grid, threads, 0, stream>>>(
+                                      T>), dim3(grid), dim3(threads), 0, stream,
           detail::forward::gru_resetOutput<T>(), value.gate_value,
           value.reset_output_value, value.prev_out_value, frame_size,
           batch_size, active_gate);
@@ -69,16 +70,16 @@ struct GRUUnitFunctor<platform::GPUPlace, T> {
     }
 
     if (batch_size == 1) {
-      detail::KeGruForwardFinalOutput<detail::forward::gru_finalOutput<T>,
+      hipLaunchKernelGGL((detail::KeGruForwardFinalOutput<detail::forward::gru_finalOutput<T>,
                                       /* is_batch= */ false,
-                                      T><<<grid, threads, 0, stream>>>(
+                                      T>), dim3(grid), dim3(threads), 0, stream,
           detail::forward::gru_finalOutput<T>(), value.gate_value,
           value.prev_out_value, value.output_value, frame_size, batch_size,
           active_node);
     } else {
-      detail::KeGruForwardFinalOutput<detail::forward::gru_finalOutput<T>,
+      hipLaunchKernelGGL((detail::KeGruForwardFinalOutput<detail::forward::gru_finalOutput<T>,
                                       /* is_batch= */ true,
-                                      T><<<grid, threads, 0, stream>>>(
+                                      T>), dim3(grid), dim3(threads), 0, stream,
           detail::forward::gru_finalOutput<T>(), value.gate_value,
           value.prev_out_value, value.output_value, frame_size, batch_size,
           active_node);
@@ -108,16 +109,16 @@ struct GRUUnitGradFunctor<platform::GPUPlace, T> {
     }
 
     if (batch_size == 1) {
-      detail::KeGruBackwardStateGrad<
+      hipLaunchKernelGGL((detail::KeGruBackwardStateGrad<
           detail::backward::gru_stateGrad<T>,
-          /* is_batch= */ false><<<grid, threads, 0, stream>>>(
+          /* is_batch= */ false>),dim3(grid), dim3(threads), 0, stream,
           detail::backward::gru_stateGrad<T>(), value.gate_value,
           grad.gate_grad, value.prev_out_value, grad.prev_out_grad,
           grad.output_grad, frame_size, batch_size, active_node);
     } else {
-      detail::KeGruBackwardStateGrad<
+      hipLaunchKernelGGL((detail::KeGruBackwardStateGrad<
           detail::backward::gru_stateGrad<T>,
-          /* is_batch= */ true><<<grid, threads, 0, stream>>>(
+          /* is_batch= */ true>), dim3(grid), dim3(threads), 0, stream,
           detail::backward::gru_stateGrad<T>(), value.gate_value,
           grad.gate_grad, value.prev_out_value, grad.prev_out_grad,
           grad.output_grad, frame_size, batch_size, active_node);
@@ -139,16 +140,16 @@ struct GRUUnitGradFunctor<platform::GPUPlace, T> {
     }
 
     if (batch_size == 1) {
-      detail::KeGruBackwardResetGrad<
+      hipLaunchKernelGGL((detail::KeGruBackwardResetGrad<
           detail::backward::gru_resetGrad<T>,
-          /* is_batch= */ false><<<grid, threads, 0, stream>>>(
+          /* is_batch= */ false>), dim3(grid), dim3(threads), 0, stream,
           detail::backward::gru_resetGrad<T>(), value.gate_value,
           grad.gate_grad, value.prev_out_value, grad.prev_out_grad,
           grad.reset_output_grad, frame_size, batch_size, active_gate);
     } else {
-      detail::KeGruBackwardResetGrad<
+      hipLaunchKernelGGL((detail::KeGruBackwardResetGrad<
           detail::backward::gru_resetGrad<T>,
-          /* is_batch= */ true><<<grid, threads, 0, stream>>>(
+          /* is_batch= */ true>), dim3(grid), dim3(threads), 0, stream,
           detail::backward::gru_resetGrad<T>(), value.gate_value,
           grad.gate_grad, value.prev_out_value, grad.prev_out_grad,
           grad.reset_output_grad, frame_size, batch_size, active_gate);

@@ -315,8 +315,7 @@ class RowConvKernel<platform::GPUPlace, T> : public framework::OpKernel<T> {
       dim3 block_dim = dim3(32, 32);
       dim3 grid_dim = dim3(DivUp(input_dim, block_dim.x), 1);
       int mem_per_block = (future_context * block_dim.x) * sizeof(T);
-      RowConvForwardSharedMemory<
-          T><<<grid_dim, block_dim, mem_per_block, stream>>>(
+      hipLaunchKernelGGL((RowConvForwardSharedMemory<T>), dim3(grid_dim), dim3(block_dim), mem_per_block, stream,
           in, weight, num_sequence, input_dim, future_context, idx, out);
     } else {
       dim3 block_dim = dim3(32, 32);
@@ -363,8 +362,7 @@ class RowConvGradKernel<platform::GPUPlace, T> : public framework::OpKernel<T> {
             (block_y * block_x + block_y * (block_x + future_context - 1) +
              future_context * block_y) *
             sizeof(T);
-        RowConvGradFilterImproved<
-            T><<<grid_dim, block_dim, mem_per_block, device_ctx.stream()>>>(
+        hipLaunchKernelGGL((RowConvGradFilterImproved<T>), dim3(grid_dim), dim3(block_dim), mem_per_block, device_ctx.stream(),
             in, dout, num_sequence, input_dim, future_context, block_x, block_y,
             idx, dfilter);
       } else {
@@ -374,8 +372,7 @@ class RowConvGradKernel<platform::GPUPlace, T> : public framework::OpKernel<T> {
         int block_y = block_dim.y;
         int mem_per_block =
             (block_x * block_y * 2) * sizeof(T);  // For 2 arrays of size 32x32
-        RowConvGradFilter<
-            T><<<grid_dim, block_dim, mem_per_block, device_ctx.stream()>>>(
+        hipLaunchKernelGGL((RowConvGradFilter<T>), dim3(grid_dim), dim3(block_dim), mem_per_block, device_ctx.stream(),
             in, dout, num_sequence, input_dim, future_context, block_x, block_y,
             idx, dfilter);
       }
@@ -387,8 +384,7 @@ class RowConvGradKernel<platform::GPUPlace, T> : public framework::OpKernel<T> {
         dim3 block_dim = dim3(32, 32);
         dim3 grid_dim = dim3(DivUp(input_dim, block_dim.x), 1);
         int mem_per_block = (future_context * block_dim.x) * sizeof(T);
-        RowConvGradInputSharedMemory<
-            T><<<grid_dim, block_dim, mem_per_block, device_ctx.stream()>>>(
+        hipLaunchKernelGGL((RowConvGradInputSharedMemory<T>), dim3(grid_dim), dim3(block_dim), mem_per_block, device_ctx.stream(),
             dout, weights, num_sequence, input_dim, future_context, idx, din);
       } else {
         dim3 block_dim = dim3(32, 32);

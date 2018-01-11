@@ -118,9 +118,9 @@ class Vol2ColFunctor<platform::GPUPlace, T> {
 
     const int threads = 1024;
     const int blocks = (num_outputs + 1024 - 1) / 1024;
-    vol2col<T><<<blocks, threads, 0,
+    hipLaunchKernelGGL((vol2col<T>), dim3(blocks), dim3(threads), 0,
                  reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                     .stream()>>>(
+                     .stream(),
         num_outputs, vol.data<T>(), input_depth, input_height, input_width,
         dilations[0], dilations[1], dilations[2], filter_depth, filter_height,
         filter_width, strides[0], strides[1], strides[2], paddings[0],
@@ -246,9 +246,9 @@ class Col2VolFunctor<platform::GPUPlace, T> {
     const int threads = 1024;
     const int blocks = (num_kernels + 1024 - 1) / 1024;
 
-    col2vol<T><<<blocks, threads, 0,
+    hipLaunchKernelGGL((col2vol<T>), dim3(blocks), dim3(threads), 0,
                  reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                     .stream()>>>(
+                     .stream(),
         num_kernels, col.data<T>(), input_depth, input_height, input_width,
         dilations[0], dilations[1], dilations[2], filter_depth, filter_height,
         filter_width, strides[0], strides[1], strides[2], paddings[0],

@@ -184,11 +184,11 @@ class Pool2dFunctor<platform::GPUPlace, PoolProcess, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelPool2D<
+    hipLaunchKernelGGL((KernelPool2D<
         PoolProcess,
-        T><<<grid, threads, 0,
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(
+                 .stream(),
         nthreads, input_data, input_channels, input_height, input_width,
         output_height, output_width, ksize_height, ksize_width, stride_height,
         stride_width, padding_height, padding_width, pool_process, output_data);
@@ -232,11 +232,11 @@ class Pool2dGradFunctor<platform::GPUPlace, PoolProcess, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelPool2DGrad<
+    hipLaunchKernelGGL((KernelPool2DGrad<
         PoolProcess,
-        T><<<grid, threads, 0,
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(
+                 .stream(),
         nthreads, input_data, output_data, output_grad_data, input_channels,
         input_height, input_width, output_height, output_width, ksize_height,
         ksize_width, stride_height, stride_width, padding_height, padding_width,
@@ -282,10 +282,10 @@ class MaxPool2dGradFunctor<platform::GPUPlace, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxPool2DGrad<
-        T><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxPool2DGrad<
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(
+                 .stream(),
         nthreads, input_data, output_data, output_grad_data, input_channels,
         input_height, input_width, output_height, output_width, ksize_height,
         ksize_width, stride_height, stride_width, padding_height, padding_width,
@@ -513,11 +513,11 @@ class Pool3dFunctor<platform::GPUPlace, PoolProcess, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelPool3D<
+    hipLaunchKernelGGL((KernelPool3D<
         PoolProcess,
-        T><<<grid, threads, 0,
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(
+                 .stream(),
         nthreads, input_data, input_channels, input_depth, input_height,
         input_width, output_depth, output_height, output_width, ksize_depth,
         ksize_height, ksize_width, stride_depth, stride_height, stride_width,
@@ -570,11 +570,11 @@ class Pool3dGradFunctor<platform::GPUPlace, PoolProcess, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelPool3DGrad<
+    hipLaunchKernelGGL((KernelPool3DGrad<
         PoolProcess,
-        T><<<grid, threads, 0,
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(
+                 .stream(),
         nthreads, input_data, output_data, output_grad_data, input_channels,
         input_depth, input_height, input_width, output_depth, output_height,
         output_width, ksize_depth, ksize_height, ksize_width, stride_depth,
@@ -627,10 +627,10 @@ class MaxPool3dGradFunctor<platform::GPUPlace, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxPool3DGrad<
-        T><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxPool3DGrad<
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(
+                 .stream(),
         nthreads, input_data, output_data, output_grad_data, input_channels,
         input_depth, input_height, input_width, output_depth, output_height,
         output_width, ksize_depth, ksize_height, ksize_width, stride_depth,
@@ -777,10 +777,10 @@ class MaxPool2dWithIndexFunctor<platform::GPUPlace, T1, T2> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxPool2dWithIdx<
-        T1, T2><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxPool2dWithIdx<
+        T1, T2>), dim3(grid), dim3(threads), 0,
                   reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                      .stream()>>>(
+                      .stream(),
         nthreads, input_data, input_channels, input_height, input_width,
         output_height, output_width, ksize_height, ksize_width, stride_height,
         stride_width, padding_height, padding_width, output_data, mask_data);
@@ -822,10 +822,10 @@ class MaxPool2dWithIndexGradFunctor<platform::GPUPlace, T1, T2> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxPool2DWithIdxGrad<
-        T1, T2><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxPool2DWithIdxGrad<
+        T1, T2>), dim3(grid), dim3(threads), 0,
                   reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                      .stream()>>>(
+                      .stream(),
         nthreads, output_grad_data, mask_data, input_channels, input_height,
         input_width, output_height, output_width, ksize_height, ksize_width,
         stride_height, stride_width, padding_height, padding_width,
@@ -986,10 +986,10 @@ class MaxPool3dWithIndexFunctor<platform::GPUPlace, T1, T2> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxPool3DWithIdx<
-        T1, T2><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxPool3DWithIdx<
+        T1, T2>), dim3(grid), dim3(threads), 0,
                   reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                      .stream()>>>(
+                      .stream(),
         nthreads, input_data, input_channels, input_depth, input_height,
         input_width, output_depth, output_height, output_width, ksize_depth,
         ksize_height, ksize_width, stride_depth, stride_height, stride_width,
@@ -1038,10 +1038,10 @@ class MaxPool3dWithIndexGradFunctor<platform::GPUPlace, T1, T2> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxPool3DWithIdxGrad<
-        T1, T2><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxPool3DWithIdxGrad<
+        T1, T2>), dim3(grid), dim3(threads), 0,
                   reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                      .stream()>>>(
+                      .stream(),
         nthreads, output_grad_data, mask_data, input_channels, input_depth,
         input_height, input_width, output_depth, output_height, output_width,
         ksize_depth, ksize_height, ksize_width, stride_depth, stride_height,

@@ -276,9 +276,9 @@ public:
     dim3 threads(1024, 1);
     dim3 grid(blockX, blockY);
 
-    ConvolutionDepthwiseInputBackward<T>
+    hipLaunchKernelGGL((ConvolutionDepthwiseInputBackward<T>), dim3(grid), dim3(threads), 0, STREAM_DEFAULT,
         // NOLINT_NEXT_LINE(whitespace/operators)
-        <<<grid, threads, 0, STREAM_DEFAULT>>>(inputSize,
+                                               inputSize,
                                                outputGrad,
                                                filterData,
                                                batchSize,
@@ -335,8 +335,9 @@ public:
                                 true);
 
     for (int i = 0; i < batchSize; i++) {
-      ConvolutionDepthwiseFilterBackward<
-          T><<<grid, threads, 0, STREAM_DEFAULT>>>(i,
+        hipLaunchKernelGGL((ConvolutionDepthwiseFilterBackward<T>),
+            grid, threads, 0, STREAM_DEFAULT,
+                                                   i,
                                                    colDataSize,
                                                    outputGrad,
                                                    inputData,

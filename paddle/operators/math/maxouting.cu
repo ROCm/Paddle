@@ -99,10 +99,10 @@ class MaxOutFunctor<platform::GPUPlace, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxOut<
-        T><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxOut<
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(nthreads, input_data, input_channels,
+                 .stream(), nthreads, input_data, input_channels,
                               input_height, input_width, groups, output_data);
   }
 };
@@ -133,10 +133,10 @@ class MaxOutGradFunctor<platform::GPUPlace, T> {
     dim3 threads(1024, 1);
     dim3 grid(blocks, 1);
 
-    KernelMaxoutGrad<
-        T><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelMaxoutGrad<
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(nthreads, input_data, output_data,
+                 .stream(), nthreads, input_data, output_data,
                               output_grad_data, input_grad_data, input_channels,
                               input_height, input_width, groups);
   }

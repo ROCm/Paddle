@@ -84,10 +84,10 @@ class Unpool2dMaxFunctor<platform::GPUPlace, T> {
     T* output_data = output->mutable_data<T>(context.GetPlace());
     int threads = 1024;
     int grid = (input.numel() + threads - 1) / threads;
-    KernelUnpool2dMax<
-        T><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelUnpool2dMax<
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(input.numel(), input_data, indices_data,
+                 .stream(), input.numel(), input_data, indices_data,
                               input_height, input_width, output_channels,
                               output_data, output_height, output_width);
   }
@@ -117,10 +117,10 @@ class Unpool2dMaxGradFunctor<platform::GPUPlace, T> {
     T* input_grad_data = input_grad->mutable_data<T>(context.GetPlace());
     int threads = 1024;
     int grid = (input.numel() + threads - 1) / threads;
-    KernelUnpool2dMaxGrad<
-        T><<<grid, threads, 0,
+    hipLaunchKernelGGL((KernelUnpool2dMaxGrad<
+        T>), dim3(grid), dim3(threads), 0,
              reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                 .stream()>>>(input.numel(), input_data, indices_data,
+                 .stream(), input.numel(), input_data, indices_data,
                               input_height, input_width, output_channels,
                               output_data, output_grad_data, output_height,
                               output_width, input_grad_data);

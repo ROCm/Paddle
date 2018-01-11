@@ -306,10 +306,8 @@ class TopkOpCUDAKernel : public framework::OpKernel<T> {
     dim3 threads(256, 1);
     dim3 grid(input_height, 1);
 
-    KeMatrixTopK<T, 5, 256><<<
-        grid, threads, 0, reinterpret_cast<const platform::CUDADeviceContext&>(
-                              ctx.device_context())
-                              .stream()>>>(output_data, output->dims()[1],
+    hipLaunchKernelGGL((KeMatrixTopK<T, 5, 256>),
+       dim3(grid), dim3(threads), 0, reinterpret_cast<const platform::CUDADeviceContext&>(ctx.device_context()).stream(), output_data, output->dims()[1],
                                            indices_data, input_data,
                                            input_width, input_width, int(k));
   }

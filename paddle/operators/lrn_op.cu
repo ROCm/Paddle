@@ -70,14 +70,14 @@ void CrossMapNormal(const framework::ExecutionContext& ctx, const T* inputs,
   const int block_size = 1024;
   int grid_size = (img_size + block_size - 1) / block_size;
 
-  KeCMRNormFillScale<
-      T><<<grid_size, block_size, 0, ctx.cuda_device_context().stream()>>>(
+  hipLaunchKernelGGL((KeCMRNormFillScale<
+      T>), dim3(grid_size), dim3(block_size), 0, ctx.cuda_device_context().stream(),
       img_size, inputs, mid, C, H, W, n, k, alpha);
 
   int input_size = N * H * W * C;
   grid_size = (input_size + block_size - 1) / block_size;
-  KeCMRNormOutput<
-      T><<<grid_size, block_size, 0, ctx.cuda_device_context().stream()>>>(
+  hipLaunchKernelGGL((KeCMRNormOutput<
+      T>), dim3(grid_size), dim3(block_size), 0, ctx.cuda_device_context().stream(),
       input_size, inputs, mid, -beta, outputs);
 }
 
@@ -149,8 +149,8 @@ void CrossMapNormalGrad(const framework::ExecutionContext& ctx, const T* x,
   const int block_size = 1024;
   int grid_size = (img_size + block_size - 1) / block_size;
 
-  KeCMRNormDiff<
-      T><<<grid_size, block_size, 0, ctx.cuda_device_context().stream()>>>(
+  hipLaunchKernelGGL((KeCMRNormDiff<
+      T>), dim3(grid_size), dim3(block_size), 0, ctx.cuda_device_context().stream(),
       img_size, x, out, mid, x_g, out_g, C, H, W, n, -beta,
       2.0f * alpha * beta);
 }

@@ -124,10 +124,10 @@ struct SelectedRowsAddTensor<platform::GPUPlace, T> {
     const int block_size = 256;
     dim3 threads(block_size, 1);
     dim3 grid(1, in1_rows.size());
-    SelectedRowsAddTensorKernel<T, block_size><<<
-        grid, threads, 0,
+    hipLaunchKernelGGL((SelectedRowsAddTensorKernel<T, block_size>),
+        dim3(grid), dim3(threads), 0,
         reinterpret_cast<const platform::CUDADeviceContext&>(context)
-            .stream()>>>(in1_data, in1_rows.data(), out_data, in1_row_numel);
+            .stream(), in1_data, in1_rows.data(), out_data, in1_row_numel);
 
     auto out_eigen = framework::EigenVector<T>::Flatten(*output);
     auto in2_eigen = framework::EigenVector<T>::Flatten(input2);
@@ -217,10 +217,10 @@ struct SelectedRowsAddToTensor<platform::GPUPlace, T> {
     const int block_size = 256;
     dim3 threads(block_size, 1);
     dim3 grid(1, in1_rows.size());
-    SelectedRowsAddToTensorKernel<T, block_size><<<
-        grid, threads, 0,
+    hipLaunchKernelGGL((SelectedRowsAddToTensorKernel<T, block_size>),
+        dim3(grid), dim3(threads), 0,
         reinterpret_cast<const platform::CUDADeviceContext&>(context)
-            .stream()>>>(in1_data, in1_rows.data(), in2_data, in1_row_numel);
+            .stream(), in1_data, in1_rows.data(), in2_data, in1_row_numel);
   }
 };
 

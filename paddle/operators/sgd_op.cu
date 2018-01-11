@@ -63,10 +63,10 @@ struct SparseSGDFunctor<platform::GPUPlace, T> {
     const int block_size = 256;
     dim3 threads(block_size, 1);
     dim3 grid(1, in_rows.size());
-    SparseSGDFunctorKernel<
-        T, 256><<<grid, threads, 0,
+    hipLaunchKernelGGL((SparseSGDFunctorKernel<
+        T, 256>), dim3(grid), dim3(threads), 0,
                   reinterpret_cast<const platform::CUDADeviceContext&>(context)
-                      .stream()>>>(in_data, in_rows.data(),
+                      .stream(), in_data, in_rows.data(),
                                    learning_rate.data<T>(), out_data,
                                    in_row_numel);
   }
