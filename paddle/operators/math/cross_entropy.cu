@@ -124,7 +124,8 @@ class CrossEntropyFunctor<platform::GPUPlace, T> {
 };
 
 template class CrossEntropyFunctor<platform::GPUPlace, float>;
-template class CrossEntropyFunctor<platform::GPUPlace, double>;
+// Fixme: Commented out since __shfl_down doesn't support double.
+//template class CrossEntropyFunctor<platform::GPUPlace, double>;
 }  // namespace math
 }  // namespace operators
 }  // namespace paddle
