@@ -15,6 +15,7 @@ limitations under the License. */
 
 #include "paddle/operators/roi_pool_op.h"
 #include "paddle/platform/cuda_helper.h"
+#include <float.h>
 
 namespace paddle {
 namespace operators {
@@ -69,7 +70,15 @@ __global__ void GPUROIPoolForward(const int nthreads, const T* input_data,
     wend = min(max(wend + roi_start_w, 0), width);
     bool is_empty = (hend <= hstart) || (wend <= wstart);
 
-    T maxval = is_empty ? 0 : -std::numeric_limits<T>::max();
+    //T maxval = is_empty ? 0 : -std::numeric_limits<T>::max();
+    T maxval = 0;
+    if (!is_empty)
+    {
+        if (std::is_same<T, float>::value)
+            maxval = -FLT_MAX;
+        else
+            maxval = -DBL_MAX;
+    }
     int maxidx = -1;
     const T* offset_input_data =
         input_data + (roi_batch_ind * channels + c) * height * width;
