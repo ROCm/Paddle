@@ -33,7 +33,7 @@ namespace platform {
 constexpr int kInvalidGPUId = -1;
 
 struct Communicator {
-  std::vector<ncclComm_t> comms_;
+  std::vector<rcclComm_t> comms_;
   std::unordered_map<int, int> comm_id_map_;
   bool inited_;
 
@@ -48,7 +48,7 @@ struct Communicator {
       comm_id_map_[gpus[i]] = i;
     }
     PADDLE_ENFORCE(
-        dynload::ncclCommInitAll(comms_.data(), gpus.size(), gpus.data()));
+        dynload::rcclCommInitAll(comms_.data(), gpus.size(), (int*)gpus.data()));
     inited_ = true;
   }
 
@@ -56,7 +56,7 @@ struct Communicator {
     if (inited_) {
       for (size_t i = 0; i < comms_.size(); ++i) {
         // FIXME(dzh) : PADDLE_ENFORCE return void
-        dynload::ncclCommDestroy(comms_[i]);
+        dynload::rcclCommDestroy(comms_[i]);
       }
     }
   }

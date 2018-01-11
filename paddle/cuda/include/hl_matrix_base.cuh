@@ -53,7 +53,7 @@ typedef BaseOp SSEClassificationError;
 namespace aggregate {
 class sum : public SSESum {
 public:
-  INLINE real init() { return 0.0f; }
+  INLINE __host__ __device__ real init() { return 0.0f; }
   INLINE real operator()(const real a, const real b) const {
     return a + b;
   }
@@ -61,7 +61,7 @@ public:
 
 class max : public SSEMax {
 public:
-  INLINE real init() { return -HL_FLOAT_MAX; }
+  INLINE __host__ __device__ real init() { return -HL_FLOAT_MAX; }
   INLINE real operator()(const real a, const real b) const {
     return a > b ? a : b;
   }
@@ -69,7 +69,7 @@ public:
 
 class min : public SSEMin {
 public:
-  INLINE real init() {return HL_FLOAT_MAX;}
+  INLINE __host__ __device__ real init() {return HL_FLOAT_MAX;}
   INLINE real operator()(const real a, const real b) const {
     return a > b ? b : a;
   }

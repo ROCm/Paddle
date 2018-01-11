@@ -36,19 +36,19 @@ public:
 #endif
   }
 
-  INLINE void apply(const int i, const int j) {
+  INLINE __host__ __device__ void apply(const int i, const int j) {
     lhs_.applyRef(i, j) = rhs_.apply(i, j);
   }
-  INLINE void apply(const int index) {
+  INLINE __host__ __device__ void apply(const int index) {
     lhs_.applyRef(index) = rhs_.apply(index);
   }
 
-  INLINE size_t getWidth() const { return lhs_.getWidth(); }
-  INLINE size_t getHeight() const { return rhs_.getHeight(); }
-  INLINE bool isContiguous() const {
+  INLINE __host__ __device__ size_t getWidth() const { return lhs_.getWidth(); }
+  INLINE __host__ __device__ size_t getHeight() const { return rhs_.getHeight(); }
+  INLINE __host__ __device__ bool isContiguous() const {
     return lhs_.isContiguous() && rhs_.isContiguous();
   }
-  INLINE bool useGpu() const { return lhs_.useGpu(); }
+  INLINE __host__ __device__ bool useGpu() const { return lhs_.useGpu(); }
 
 private:
   TensorApply<LhsType, T> lhs_;
@@ -146,7 +146,7 @@ void AssignEvaluate(Assign&& assign, AssignOp&&... args) {
       dim3 threads(blockSizeX, blockSizeY);
       dim3 grid(gridSizeX, gridSizeY);
       hipLaunchKernelGGL((AssignGpuEvaluate2), dim3(grid), dim3(threads), 0, STREAM_DEFAULT, 
-          height, width, assign, args...);
+          (int)height, (int)width, assign, args...);
     }
 
     CHECK_SYNC("AssignEvaluate failed");

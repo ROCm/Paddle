@@ -17,7 +17,7 @@ limitations under the License. */
 #include <stdint.h>
 
 #ifdef PADDLE_WITH_CUDA
-#include <cuda.h>
+#include "hip/hip_runtime.h"
 #endif  // PADDLE_WITH_CUDA
 
 #include "unsupported/Eigen/CXX11/Tensor"

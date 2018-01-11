@@ -30,7 +30,7 @@ limitations under the License. */
 #endif
 
 #ifdef __HIP_DEVICE_COMPILE__
-#include <vector_types.h>
+#include "hip/hip_vector_types.h"
 #ifndef PADDLE_TYPE_DOUBLE
 typedef float4 vecType;
 #else

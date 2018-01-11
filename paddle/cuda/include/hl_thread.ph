@@ -17,10 +17,9 @@ limitations under the License. */
 
 #include <stdio.h>
 #include <pthread.h>
-#include <cuda.h>
 #include <hip/hip_runtime.h>
-#include <cublas_v2.h>
-#include <curand.h>
+#include <hipblas.h>
+#include <hiprand.h>
 #include <cudnn.h>
 #include "hl_base.h"
 
@@ -41,15 +40,15 @@ limitations under the License. */
  * @param   is_init                 Thread init or not.
  */
 typedef struct {
-    hipStream_t             stream[HPPL_STREAM_END];
-    cublasHandle_t           handle;
-    curandGenerator_t        gen;
+    hipStream_t              stream[HPPL_STREAM_END];
+    hipblasHandle_t          handle;
+    hiprandGenerator_t       gen;
     cudnnHandle_t            cudnn_handle;
     cudnnTensorDescriptor_t  cudnn_desc;
     pthread_mutex_t          *gen_mutex;
     real                     *gpu_mem;
     real                     *cpu_mem;
-    hipEvent_t              event;
+    hipEvent_t               event;
     int                      device;
     int                      major;
     bool                     is_init;
@@ -71,7 +70,7 @@ extern void hl_cudnn_init(cudnnHandle_t *cudnn_handle, hipStream_t stream);
  * @param   cublas_handle  Cublas handle.
  * @param   stream         Cuda stream.
  */
-extern void hl_cublas_init(cublasHandle_t *cublas_handle, hipStream_t stream);
+extern void hl_cublas_init(hipblasHandle_t *hipblas_handle, hipStream_t stream);
 
 /**
  * @brief   Initialize cudnn tensor descriptor.

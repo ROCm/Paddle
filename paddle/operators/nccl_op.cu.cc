@@ -28,13 +28,13 @@ class NCCLTypeWrapper;
 template <>
 class NCCLTypeWrapper<float> {
  public:
-  static const ncclDataType_t type = ncclFloat;
+  static const rcclDataType_t type = rcclFloat;
 };
 
 template <>
 class NCCLTypeWrapper<double> {
  public:
-  static const ncclDataType_t type = ncclDouble;
+  static const rcclDataType_t type = rcclDouble;
 };
 
 template <typename T>
@@ -48,16 +48,16 @@ class NCCLAllReduceKernel : public framework::OpKernel<T> {
     auto outs = ctx.MultiOutput<LoDTensor>("Out");
 
     std::string reduction = ctx.Attr<std::string>("reduction");
-    ncclRedOp_t reduction_op_ = ncclSum;
+    rcclRedOp_t reduction_op_ = rcclSum;
 
     if (reduction == "ncclMin") {
-      reduction_op_ = ncclMin;
+      reduction_op_ = rcclMin;
     } else if (reduction == "ncclMax") {
-      reduction_op_ = ncclMax;
+      reduction_op_ = rcclMax;
     } else if (reduction == "ncclSum") {
-      reduction_op_ = ncclSum;
+      reduction_op_ = rcclSum;
     } else if (reduction == "ncclProd") {
-      reduction_op_ = ncclProd;
+      reduction_op_ = rcclProd;
     } else {
       PADDLE_THROW("Invalid reduction. default ncclSum.");
     }
@@ -75,7 +75,7 @@ class NCCLAllReduceKernel : public framework::OpKernel<T> {
               << " invoke allreduce. send " << ins[i]->numel() << " recv "
               << outs[i]->numel();
 
-      PADDLE_ENFORCE(platform::dynload::ncclAllReduce(
+      PADDLE_ENFORCE(platform::dynload::rcclAllReduce(
           ins[i]->data<T>(), outs[i]->mutable_data<T>(ctx.GetPlace()),
           outs[i]->numel(), NCCLTypeWrapper<T>::type, reduction_op_,
           comm->comms_[idx], stream));
@@ -94,21 +94,22 @@ class NCCLReduceKernel : public framework::OpKernel<T> {
   void Compute(const framework::ExecutionContext& ctx) const override {
     PADDLE_ENFORCE(platform::is_gpu_place(ctx.GetPlace()),
                    "This kernel only runs on GPU device.");
+#if 0
 
     auto ins = ctx.MultiInput<LoDTensor>("X");  // x0, x1, x2
     auto outs = ctx.MultiOutput<LoDTensor>("Out");
 
     std::string reduction = ctx.Attr<std::string>("reduction");
-    ncclRedOp_t reduction_op_ = ncclSum;
+    rcclRedOp_t reduction_op_ = rcclSum;
 
     if (reduction == "ncclMin") {
-      reduction_op_ = ncclMin;
+      reduction_op_ = rcclMin;
     } else if (reduction == "ncclMax") {
-      reduction_op_ = ncclMax;
+      reduction_op_ = rcclMax;
     } else if (reduction == "ncclSum") {
-      reduction_op_ = ncclSum;
+      reduction_op_ = rcclSum;
     } else if (reduction == "ncclProd") {
-      reduction_op_ = ncclProd;
+      reduction_op_ = rcclProd;
     } else {
       PADDLE_THROW("Invalid reduction. default ncclSum.");
     }
@@ -137,7 +138,7 @@ class NCCLReduceKernel : public framework::OpKernel<T> {
       VLOG(1) << "gpu : " << gpu_id << " invoke reduce. send "
               << ins[i]->numel() << " recv " << outs[i]->numel();
 
-      PADDLE_ENFORCE(platform::dynload::ncclReduce(
+      PADDLE_ENFORCE(platform::dynload::rcclReduce(
           ins[i]->data<T>(), recvbuffer, ins[i]->numel(),
           NCCLTypeWrapper<T>::type, reduction_op_, root, comm->comms_[idx],
           stream));
@@ -146,6 +147,7 @@ class NCCLReduceKernel : public framework::OpKernel<T> {
       VLOG(1) << "gpu : " << gpu_id << " finished reduce. send "
               << ins[i]->numel() << " recv " << outs[i]->numel();
     }
+#endif
   }
 };
 
@@ -174,7 +176,7 @@ class NCCLBcastKernel : public framework::OpKernel<T> {
                 << ins[i]->numel();
 
         VLOG(1) << " before ncclBcast";
-        PADDLE_ENFORCE(platform::dynload::ncclBcast(
+        PADDLE_ENFORCE(platform::dynload::rcclBcast(
             (void*)ins[i]->data<T>(), ins[i]->numel(), NCCLTypeWrapper<T>::type,
             root, comm->comms_[idx], stream));
         VLOG(1) << " after ncclBcast";
@@ -188,7 +190,7 @@ class NCCLBcastKernel : public framework::OpKernel<T> {
         VLOG(1) << "gpu : " << gpu_id << " invoke Bcast. recv buffer "
                 << framework::product(outs[i]->dims());
 
-        PADDLE_ENFORCE(platform::dynload::ncclBcast(
+        PADDLE_ENFORCE(platform::dynload::rcclBcast(
             outs[i]->mutable_data<T>(ctx.GetPlace()), outs[i]->numel(),
             NCCLTypeWrapper<T>::type, root, comm->comms_[idx], stream));
         PADDLE_ENFORCE(hipStreamSynchronize(stream));

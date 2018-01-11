@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 #pragma once
-#include <cuda_profiler_api.h>
+#include "hip/hip_runtime_api.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +23,7 @@ namespace platform {
 
 void CudaProfilerInit(std::string output_file, std::string output_mode,
                       std::vector<std::string> config_flags) {
+#if 0
   std::array<char, 128> buf;
   std::string tmpl = "/tmp/cuda_profile_config.XXXXXX";
   PADDLE_ENFORCE_LT(tmpl.size(), buf.size());
@@ -43,6 +44,7 @@ void CudaProfilerInit(std::string output_file, std::string output_mode,
   cudaOutputMode_t mode = output_mode == "csv" ? cudaCSV : cudaKeyValuePair;
   PADDLE_ENFORCE(
       cudaProfilerInitialize(config_file.c_str(), output_file.c_str(), mode));
+#endif
 }
 
 void CudaProfilerStart() { PADDLE_ENFORCE(hipProfilerStart()); }

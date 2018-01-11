@@ -16,7 +16,6 @@ limitations under the License. */
 // Because clang-format 4.X and clang-format 3.8+ format
 // following lines in different. So disable clang-format.
 #include "hl_cuda.h"
-#include <cuda_profiler_api.h>
 #include <string.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
@@ -43,8 +42,8 @@ void *curand_dso_handle = nullptr;
 #define DYNAMIC_LOAD_CURAND_WRAP(__name)                                       \
   struct DynLoad__##__name {                                                   \
     template <typename... Args>                                                \
-    curandStatus_t operator()(Args... args) {                                  \
-      typedef curandStatus_t (*curandFunc)(Args...);                           \
+    hiprandStatus_t operator()(Args... args) {                                  \
+      typedef hiprandStatus_t (*curandFunc)(Args...);                           \
       std::call_once(curand_dso_flag, GetCurandDsoHandle, &curand_dso_handle); \
       void *p_##__name = dlsym(curand_dso_handle, #__name);                    \
       return reinterpret_cast<curandFunc>(p_##__name)(args...);                \
@@ -54,7 +53,7 @@ void *curand_dso_handle = nullptr;
 #define DYNAMIC_LOAD_CURAND_WRAP(__name)      \
   struct DynLoad__##__name {                  \
     template <typename... Args>               \
-    curandStatus_t operator()(Args... args) { \
+    hiprandStatus_t operator()(Args... args) { \
       return __name(args...);                 \
     }                                         \
   } __name; /* struct DynLoad__##__name */
@@ -63,11 +62,11 @@ void *curand_dso_handle = nullptr;
 /* include all needed curand functions in HPPL */
 // clang-format off
 #define CURAND_RAND_ROUTINE_EACH(__macro)    \
-  __macro(curandCreateGenerator)             \
-  __macro(curandSetStream)                   \
-  __macro(curandSetPseudoRandomGeneratorSeed)\
-  __macro(curandGenerateUniform)             \
-  __macro(curandGenerateUniformDouble)
+  __macro(hiprandCreateGenerator)             \
+  __macro(hiprandSetStream)                   \
+  __macro(hiprandSetPseudoRandomGeneratorSeed)\
+  __macro(hiprandGenerateUniform)             \
+  __macro(hiprandGenerateUniformDouble)
 // clang-format on
 
 CURAND_RAND_ROUTINE_EACH(DYNAMIC_LOAD_CURAND_WRAP)
@@ -403,22 +402,22 @@ void hl_create_global_resources(hl_device_prop device_prop) {
   hl_cublas_init(&device_res->handle, device_res->stream[0]);
 
   /* create curand gen */
-  CHECK_EQ(dynload::curandCreateGenerator(&device_res->gen,
-                                          CURAND_RNG_PSEUDO_DEFAULT),
-           CURAND_STATUS_SUCCESS)
+  CHECK_EQ(dynload::hiprandCreateGenerator(&device_res->gen,
+                                          HIPRAND_RNG_PSEUDO_DEFAULT),
+           HIPRAND_STATUS_SUCCESS)
       << "[Start failed] Curand init failed.";
 
-  CHECK_EQ(dynload::curandSetStream(device_res->gen, device_res->stream[0]),
-           CURAND_STATUS_SUCCESS)
+  CHECK_EQ(dynload::hiprandSetStream(device_res->gen, device_res->stream[0]),
+           HIPRAND_STATUS_SUCCESS)
       << "[Start failed] Curand set stream failed!";
 
   /* create cudnn handle */
   hl_cudnn_init(&device_res->cudnn_handle, device_res->stream[0]);
 
   int seed = gettid();
-  CHECK_EQ(dynload::curandSetPseudoRandomGeneratorSeed(device_res->gen,
+  CHECK_EQ(dynload::hiprandSetPseudoRandomGeneratorSeed(device_res->gen,
                                                        seed + device),
-           CURAND_STATUS_SUCCESS);
+           HIPRAND_STATUS_SUCCESS);
 
   device_res->gen_mutex = (pthread_mutex_t *)(malloc(sizeof(pthread_mutex_t)));
   pthread_mutex_init(device_res->gen_mutex, NULL);
@@ -535,19 +534,19 @@ void hl_rand(real *dest_d, size_t num) {
   pthread_mutex_lock(t_resource.gen_mutex);
   CHECK_EQ(
 #ifndef PADDLE_TYPE_DOUBLE
-      dynload::curandGenerateUniform(t_resource.gen, dest_d, num),
+      dynload::hiprandGenerateUniform(t_resource.gen, dest_d, num),
 #else
-      dynload::curandGenerateUniformDouble(t_resource.gen, dest_d, num),
+      dynload::hiprandGenerateUniformDouble(t_resource.gen, dest_d, num),
 #endif
-      CURAND_STATUS_SUCCESS);
+      HIPRAND_STATUS_SUCCESS);
   pthread_mutex_unlock(t_resource.gen_mutex);
   CHECK_SYNC("hl_rand failed");
 }
 
 void hl_srand(unsigned int seed) {
   pthread_mutex_lock(t_resource.gen_mutex);
-  CHECK_EQ(dynload::curandSetPseudoRandomGeneratorSeed(t_resource.gen, seed),
-           CURAND_STATUS_SUCCESS);
+  CHECK_EQ(dynload::hiprandSetPseudoRandomGeneratorSeed(t_resource.gen, seed),
+           HIPRAND_STATUS_SUCCESS);
   pthread_mutex_unlock(t_resource.gen_mutex);
 }
 

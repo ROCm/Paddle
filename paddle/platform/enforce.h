@@ -39,9 +39,10 @@ limitations under the License. */
 #include "paddle/platform/dynload/nccl.h"
 
 #include <hip/hip_runtime_api.h>
-#include <cublas_v2.h>
+#include <hipblas.h>
 #include <cudnn.h>
-#include <curand.h>
+#include <hiprand.h>
+#include <rccl.h>
 #include <thrust/system/cuda/error.h>
 #include <thrust/system_error.h>
 
@@ -128,18 +129,9 @@ inline typename std::enable_if<sizeof...(Args) != 0, void>::type throw_on_error(
 
 template <typename... Args>
 inline typename std::enable_if<sizeof...(Args) != 0, void>::type throw_on_error(
-    cudaError_t e, const Args&... args) {
-  if (UNLIKELY(e)) {
-    throw thrust::system_error(e, thrust::cuda_category(),
-                               string::Sprintf(args...));
-  }
-}
-
-template <typename... Args>
-inline typename std::enable_if<sizeof...(Args) != 0, void>::type throw_on_error(
-    curandStatus_t stat, const Args&... args) {
-  if (stat != CURAND_STATUS_SUCCESS) {
-    throw thrust::system_error(cudaErrorLaunchFailure, thrust::cuda_category(),
+    hiprandStatus_t stat, const Args&... args) {
+  if (stat != HIPRAND_STATUS_SUCCESS) {
+    throw thrust::system_error(hipErrorLaunchFailure, thrust::cuda_category(),
                                string::Sprintf(args...));
   }
 }
@@ -157,39 +149,43 @@ inline typename std::enable_if<sizeof...(Args) != 0, void>::type throw_on_error(
 
 template <typename... Args>
 inline typename std::enable_if<sizeof...(Args) != 0, void>::type throw_on_error(
-    cublasStatus_t stat, const Args&... args) {
+    hipblasStatus_t stat, const Args&... args) {
   std::string err;
-  if (stat == CUBLAS_STATUS_SUCCESS) {
+  if (stat == HIPBLAS_STATUS_SUCCESS) {
     return;
-  } else if (stat == CUBLAS_STATUS_NOT_INITIALIZED) {
+  } else if (stat == HIPBLAS_STATUS_NOT_INITIALIZED) {
     err = "CUBLAS: not initialized, ";
-  } else if (stat == CUBLAS_STATUS_ALLOC_FAILED) {
+  } else if (stat == HIPBLAS_STATUS_ALLOC_FAILED) {
     err = "CUBLAS: alloc failed, ";
-  } else if (stat == CUBLAS_STATUS_INVALID_VALUE) {
+  } else if (stat == HIPBLAS_STATUS_INVALID_VALUE) {
     err = "CUBLAS: invalid value, ";
-  } else if (stat == CUBLAS_STATUS_ARCH_MISMATCH) {
+#if 0
+  } else if (stat == HIPBLAS_STATUS_ARCH_MISMATCH) {
     err = "CUBLAS: arch mismatch, ";
-  } else if (stat == CUBLAS_STATUS_MAPPING_ERROR) {
+#endif
+  } else if (stat == HIPBLAS_STATUS_MAPPING_ERROR) {
     err = "CUBLAS: mapping error, ";
-  } else if (stat == CUBLAS_STATUS_EXECUTION_FAILED) {
+  } else if (stat == HIPBLAS_STATUS_EXECUTION_FAILED) {
     err = "CUBLAS: execution failed, ";
-  } else if (stat == CUBLAS_STATUS_INTERNAL_ERROR) {
+  } else if (stat == HIPBLAS_STATUS_INTERNAL_ERROR) {
     err = "CUBLAS: internal error, ";
-  } else if (stat == CUBLAS_STATUS_NOT_SUPPORTED) {
+  } else if (stat == HIPBLAS_STATUS_NOT_SUPPORTED) {
     err = "CUBLAS: not supported, ";
-  } else if (stat == CUBLAS_STATUS_LICENSE_ERROR) {
+#if 0
+  } else if (stat == HIPBLAS_STATUS_LICENSE_ERROR) {
     err = "CUBLAS: license error, ";
+#endif
   }
   throw std::runtime_error(err + string::Sprintf(args...));
 }
 
 template <typename... Args>
 inline typename std::enable_if<sizeof...(Args) != 0, void>::type throw_on_error(
-    ncclResult_t stat, const Args&... args) {
-  if (stat == ncclSuccess) {
+    rcclResult_t stat, const Args&... args) {
+  if (stat == rcclSuccess) {
     return;
   } else {
-    throw std::runtime_error(platform::dynload::ncclGetErrorString(stat) +
+    throw std::runtime_error(/*platform::dynload::rcclGetErrorString(stat) + */
                              string::Sprintf(args...));
   }
 }

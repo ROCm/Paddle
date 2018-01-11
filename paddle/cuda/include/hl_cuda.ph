@@ -18,10 +18,9 @@ limitations under the License. */
 
 #include <stdio.h>
 #include <pthread.h>
-#include <cuda.h>
 #include <hip/hip_runtime.h>
-#include <cublas_v2.h>
-#include <curand.h>
+#include <hipblas.h>
+#include <hiprand.h>
 #include <cudnn.h>
 #include "hl_base.h"
 
@@ -37,15 +36,15 @@ struct _hl_event_st {
  * @brief   global device resources.
  *
  * @param   *stream         device global stream.
- * @param   handle          devcie cublas handle.
+ * @param   handle          devcie hipblas handle.
  * @param   gen             device curand generator.
  * @param   cudnn_handle    cudnn handle.
  * @param   *gen_mutex      gen lock.
  */
 typedef struct {
-    hipStream_t        *stream;
-    cublasHandle_t      handle;
-    curandGenerator_t   gen;
+    hipStream_t         *stream;
+    hipblasHandle_t     handle;
+    hiprandGenerator_t  gen;
     cudnnHandle_t       cudnn_handle;
     pthread_mutex_t     *gen_mutex;
 }_global_device_resources, *global_device_resources;

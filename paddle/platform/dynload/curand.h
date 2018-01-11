@@ -14,7 +14,7 @@ limitations under the License. */
 
 #pragma once
 
-#include <curand.h>
+#include <hiprand.h>
 #include <dlfcn.h>
 #include <mutex>
 #include "paddle/platform/dynload/dynamic_loader.h"
@@ -28,8 +28,8 @@ extern void *curand_dso_handle;
 #define DECLARE_DYNAMIC_LOAD_CURAND_WRAP(__name)                    \
   struct DynLoad__##__name {                                        \
     template <typename... Args>                                     \
-    curandStatus_t operator()(Args... args) {                       \
-      typedef curandStatus_t (*curandFunc)(Args...);                \
+    hiprandStatus_t operator()(Args... args) {                       \
+      typedef hiprandStatus_t (*curandFunc)(Args...);                \
       std::call_once(curand_dso_flag,                               \
                      paddle::platform::dynload::GetCurandDsoHandle, \
                      &curand_dso_handle);                           \
@@ -42,7 +42,7 @@ extern void *curand_dso_handle;
 #define DECLARE_DYNAMIC_LOAD_CURAND_WRAP(__name) \
   struct DynLoad__##__name {                     \
     template <typename... Args>                  \
-    curandStatus_t operator()(Args... args) {    \
+    hiprandStatus_t operator()(Args... args) {    \
       return __name(args...);                    \
     }                                            \
   };                                             \
@@ -50,13 +50,13 @@ extern void *curand_dso_handle;
 #endif
 
 #define CURAND_RAND_ROUTINE_EACH(__macro)      \
-  __macro(curandCreateGenerator);              \
-  __macro(curandSetStream);                    \
-  __macro(curandSetPseudoRandomGeneratorSeed); \
-  __macro(curandGenerateUniform);              \
-  __macro(curandGenerateUniformDouble);        \
-  __macro(curandGenerateNormal);               \
-  __macro(curandDestroyGenerator);
+  __macro(hiprandCreateGenerator);              \
+  __macro(hiprandSetStream);                    \
+  __macro(hiprandSetPseudoRandomGeneratorSeed); \
+  __macro(hiprandGenerateUniform);              \
+  __macro(hiprandGenerateUniformDouble);        \
+  __macro(hiprandGenerateNormal);               \
+  __macro(hiprandDestroyGenerator);
 
 CURAND_RAND_ROUTINE_EACH(DECLARE_DYNAMIC_LOAD_CURAND_WRAP);
 

@@ -18,6 +18,7 @@ limitations under the License. */
 #include "hl_thread.ph"
 #include "paddle/utils/DynamicLoader.h"
 #include "paddle/utils/Logging.h"
+//#define HIPBLAS_UNSUPPORTED_API 1
 
 namespace dynload {
 
@@ -35,8 +36,8 @@ void *cublas_dso_handle = nullptr;
 #define DYNAMIC_LOAD_CUBLAS_WRAP(__name)                                       \
   struct DynLoad__##__name {                                                   \
     template <typename... Args>                                                \
-    cublasStatus_t operator()(Args... args) {                                  \
-      typedef cublasStatus_t (*cublasFunc)(Args...);                           \
+    hipblasStatus_t operator()(Args... args) {                                  \
+      typedef hipblasStatus_t (*cublasFunc)(Args...);                           \
       std::call_once(cublas_dso_flag, GetCublasDsoHandle, &cublas_dso_handle); \
       void *p_##__name = dlsym(cublas_dso_handle, #__name);                    \
       return reinterpret_cast<cublasFunc>(p_##__name)(args...);                \
@@ -46,7 +47,7 @@ void *cublas_dso_handle = nullptr;
 #define DYNAMIC_LOAD_CUBLAS_WRAP(__name)      \
   struct DynLoad__##__name {                  \
     template <typename... Args>               \
-    cublasStatus_t operator()(Args... args) { \
+    hipblasStatus_t operator()(Args... args) { \
       return __name(args...);                 \
     }                                         \
   } __name;  // struct DynLoad__##__name
@@ -57,26 +58,26 @@ void *cublas_dso_handle = nullptr;
 // include all needed cublas functions in HPPL
 // clang-format off
 #define CUBLAS_BLAS_ROUTINE_EACH(__macro) \
-  __macro(cublasSgemv)                    \
-  __macro(cublasDgemv)                    \
-  __macro(cublasSgemm)                    \
-  __macro(cublasDgemm)                    \
-  __macro(cublasSgeam)                    \
-  __macro(cublasDgeam)                    \
+  __macro(hipblasSgemv)                    \
+  __macro(hipblasDgemv)                    \
+  __macro(hipblasSgemm)                    \
+  __macro(hipblasDgemm)                    \
+  __macro(hipblasSgeam)                    \
+  __macro(hipblasDgeam)                    \
 
-DYNAMIC_LOAD_CUBLAS_V2_WRAP(cublasCreate)
-DYNAMIC_LOAD_CUBLAS_V2_WRAP(cublasDestroy)
-DYNAMIC_LOAD_CUBLAS_V2_WRAP(cublasSetStream)
-DYNAMIC_LOAD_CUBLAS_V2_WRAP(cublasSetPointerMode)
-DYNAMIC_LOAD_CUBLAS_V2_WRAP(cublasGetPointerMode)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasSgemmBatched)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasDgemmBatched)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasCgemmBatched)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasZgemmBatched)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasSgetrfBatched)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasSgetriBatched)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasDgetrfBatched)
-DYNAMIC_LOAD_CUBLAS_WRAP(cublasDgetriBatched)
+DYNAMIC_LOAD_CUBLAS_V2_WRAP(hipblasCreate)
+DYNAMIC_LOAD_CUBLAS_V2_WRAP(hipblasDestroy)
+DYNAMIC_LOAD_CUBLAS_V2_WRAP(hipblasSetStream)
+DYNAMIC_LOAD_CUBLAS_V2_WRAP(hipblasSetPointerMode)
+DYNAMIC_LOAD_CUBLAS_V2_WRAP(hipblasGetPointerMode)
+DYNAMIC_LOAD_CUBLAS_WRAP(hipblasSgemmBatched)
+DYNAMIC_LOAD_CUBLAS_WRAP(hipblasDgemmBatched)
+DYNAMIC_LOAD_CUBLAS_WRAP(hipblasCgemmBatched)
+DYNAMIC_LOAD_CUBLAS_WRAP(hipblasZgemmBatched)
+//DYNAMIC_LOAD_CUBLAS_WRAP(hipblasSgetrfBatched)
+//DYNAMIC_LOAD_CUBLAS_WRAP(hipblasSgetriBatched)
+DYNAMIC_LOAD_CUBLAS_WRAP(hipblasDgetrfBatched)
+DYNAMIC_LOAD_CUBLAS_WRAP(hipblasDgetriBatched)
 CUBLAS_BLAS_ROUTINE_EACH(DYNAMIC_LOAD_CUBLAS_V2_WRAP)
 
 #undef DYNAMIC_LOAD_CUBLAS_WRAP
@@ -87,11 +88,11 @@ CUBLAS_BLAS_ROUTINE_EACH(DYNAMIC_LOAD_CUBLAS_V2_WRAP)
 
 // clang-format on
 #ifndef PADDLE_TYPE_DOUBLE
-#define CUBLAS_GEAM dynload::cublasSgeam
-#define CUBLAS_GEMV dynload::cublasSgemv
-#define CUBLAS_GEMM dynload::cublasSgemm
-#define CUBLAS_GETRF dynload::cublasSgetrfBatched
-#define CUBLAS_GETRI dynload::cublasSgetriBatched
+#define CUBLAS_GEAM dynload::hipblasSgeam
+#define CUBLAS_GEMV dynload::hipblasSgemv
+#define CUBLAS_GEMM dynload::hipblasSgemm
+//#define CUBLAS_GETRF dynload::hipblasSgetrfBatched
+//#define CUBLAS_GETRI dynload::hipblasSgetriBatched
 #else
 #define CUBLAS_GEAM dynload::cublasDgeam
 #define CUBLAS_GEMV dynload::cublasDgemv
@@ -100,23 +101,25 @@ CUBLAS_BLAS_ROUTINE_EACH(DYNAMIC_LOAD_CUBLAS_V2_WRAP)
 #define CUBLAS_GETRI dynload::cublasDgetriBatched
 #endif
 
-const char *hl_cublas_get_error_string(cublasStatus_t status) {
+const char *hl_cublas_get_error_string(hipblasStatus_t status) {
   switch (status) {
-    case CUBLAS_STATUS_NOT_INITIALIZED:
+    case HIPBLAS_STATUS_NOT_INITIALIZED:
       return "[cublas status]: not initialized";
-    case CUBLAS_STATUS_ALLOC_FAILED:
+    case HIPBLAS_STATUS_ALLOC_FAILED:
       return "[cublas status]: allocate failed";
-    case CUBLAS_STATUS_INVALID_VALUE:
+    case HIPBLAS_STATUS_INVALID_VALUE:
       return "[cublas status]: invalid value";
-    case CUBLAS_STATUS_ARCH_MISMATCH:
+#ifdef HIPBLAS_UNSUPPORTED_API
+    case HIPBLAS_STATUS_ARCH_MISMATCH:
       return "[cublas status]: arch mismatch";
-    case CUBLAS_STATUS_MAPPING_ERROR:
+#endif
+    case HIPBLAS_STATUS_MAPPING_ERROR:
       return "[cublas status]: mapping error";
-    case CUBLAS_STATUS_EXECUTION_FAILED:
+    case HIPBLAS_STATUS_EXECUTION_FAILED:
       return "[cublas status]: execution failed";
-    case CUBLAS_STATUS_INTERNAL_ERROR:
+    case HIPBLAS_STATUS_INTERNAL_ERROR:
       return "[cublas status]: internal error";
-    case CUBLAS_STATUS_SUCCESS:
+    case HIPBLAS_STATUS_SUCCESS:
       return "[cublas status]: success";
     default:
       return "[cublas status]: unknown error";
@@ -127,17 +130,17 @@ const char *hl_cublas_get_error_string(cublasStatus_t status) {
  * Check build-in cublas function using glog and it also
  * support << operator for more details error info.
  */
-cublasStatus_t g_cublasStat;
+hipblasStatus_t g_cublasStat;
 #define CHECK_CUBLAS(cublas_func)               \
   g_cublasStat = cublas_func;                   \
-  CHECK_EQ(CUBLAS_STATUS_SUCCESS, g_cublasStat) \
+  CHECK_EQ(HIPBLAS_STATUS_SUCCESS, g_cublasStat) \
       << "Cublas Error: " << hl_cublas_get_error_string(g_cublasStat) << " "
 
-void hl_cublas_init(cublasHandle_t *cublas_handle, hipStream_t stream) {
-  CHECK_CUBLAS(dynload::cublasCreate(cublas_handle))
+void hl_cublas_init(hipblasHandle_t *cublas_handle, hipStream_t stream) {
+  CHECK_CUBLAS(dynload::hipblasCreate(cublas_handle))
       << "[cublas init] Cublas create handle faild!";
 
-  CHECK_CUBLAS(dynload::cublasSetStream(*cublas_handle, stream))
+  CHECK_CUBLAS(dynload::hipblasSetStream(*cublas_handle, stream))
       << "[cublas init] Cublas set stream faild!";
 }
 
@@ -150,8 +153,8 @@ void hl_matrix_transpose(
   CHECK_NOTNULL(C_d);
 
   CHECK_CUBLAS(CUBLAS_GEAM(t_resource.handle,
-                           CUBLAS_OP_T,
-                           CUBLAS_OP_N,
+                           HIPBLAS_OP_T,
+                           HIPBLAS_OP_N,
                            dimM,
                            dimN,
                            &alpha,
@@ -186,8 +189,10 @@ void hl_matrix_inverse(real *A_d, real *C_d, int dimN, int lda, int ldc) {
      small-sized matrices. There may be a better way to reconstruct
      the API for better performance.
    */
+#ifdef HIPBLAS_UNSUPPORTED_API
   CHECK_CUBLAS(
       CUBLAS_GETRF(t_resource.handle, dimN, inout_d, lda, pivot_d, info_d, 1));
+#endif
 
   int info_h;
   hl_memcpy(&info_h, info_d, sizeof(int));
@@ -200,6 +205,7 @@ void hl_matrix_inverse(real *A_d, real *C_d, int dimN, int lda, int ldc) {
   real **out_d = (real **)hl_malloc_device(sizeof(real *));
   hl_memcpy(out_d, out_h, sizeof(real *));
 
+#ifdef HIPBLAS_UNSUPPORTED_API
   CHECK_CUBLAS(CUBLAS_GETRI(t_resource.handle,
                             dimN,
                             (const real **)inout_d,
@@ -209,6 +215,7 @@ void hl_matrix_inverse(real *A_d, real *C_d, int dimN, int lda, int ldc) {
                             ldc,
                             info_d,
                             1));
+#endif
 
   hl_memcpy(&info_h, info_d, sizeof(int));
   if (info_h != 0) {
@@ -255,11 +262,11 @@ void hl_matrix_mul(real *A_d,
     return;
   }
 
-  cublasStatus_t stat;
+  hipblasStatus_t stat;
   if ((HPPL_OP_N == transa) && (HPPL_OP_N == transb)) {
     stat = CUBLAS_GEMM(t_resource.handle,
-                       CUBLAS_OP_N,
-                       CUBLAS_OP_N,
+                       HIPBLAS_OP_N,
+                       HIPBLAS_OP_N,
                        dimN,
                        dimM,
                        dimK,
@@ -273,8 +280,8 @@ void hl_matrix_mul(real *A_d,
                        ldc);
   } else if ((HPPL_OP_T == transa) && (HPPL_OP_N == transb)) {
     stat = CUBLAS_GEMM(t_resource.handle,
-                       CUBLAS_OP_N,
-                       CUBLAS_OP_T,
+                       HIPBLAS_OP_N,
+                       HIPBLAS_OP_T,
                        dimN,
                        dimM,
                        dimK,
@@ -288,8 +295,8 @@ void hl_matrix_mul(real *A_d,
                        ldc);
   } else if ((HPPL_OP_N == transa) && (HPPL_OP_T == transb)) {
     stat = CUBLAS_GEMM(t_resource.handle,
-                       CUBLAS_OP_T,
-                       CUBLAS_OP_N,
+                       HIPBLAS_OP_T,
+                       HIPBLAS_OP_N,
                        dimN,
                        dimM,
                        dimK,
@@ -304,7 +311,7 @@ void hl_matrix_mul(real *A_d,
   } else {
     LOG(FATAL) << "parameter transa error!";
   }
-  CHECK_EQ(stat, CUBLAS_STATUS_SUCCESS) << hl_cublas_get_error_string(stat);
+  CHECK_EQ(stat, HIPBLAS_STATUS_SUCCESS) << hl_cublas_get_error_string(stat);
   CHECK_SYNC("hl_matrix_mul failed");
 }
 
@@ -352,10 +359,10 @@ void hl_matrix_mul_vector(real *A_d,
   CHECK_NOTNULL(B_d);
   CHECK_NOTNULL(C_d);
 
-  cublasStatus_t stat;
+  hipblasStatus_t stat;
   if (HPPL_OP_N == trans) {
     stat = CUBLAS_GEMV(t_resource.handle,
-                       CUBLAS_OP_T,
+                       HIPBLAS_OP_T,
                        dimN,
                        dimM,
                        &alpha,
@@ -368,7 +375,7 @@ void hl_matrix_mul_vector(real *A_d,
                        incc);
   } else if (HPPL_OP_T == trans) {
     stat = CUBLAS_GEMV(t_resource.handle,
-                       CUBLAS_OP_N,
+                       HIPBLAS_OP_N,
                        dimN,
                        dimM,
                        &alpha,
@@ -383,7 +390,7 @@ void hl_matrix_mul_vector(real *A_d,
     LOG(FATAL) << "parameter transa error!";
   }
 
-  CHECK_EQ(stat, CUBLAS_STATUS_SUCCESS) << hl_cublas_get_error_string(stat);
+  CHECK_EQ(stat, HIPBLAS_STATUS_SUCCESS) << hl_cublas_get_error_string(stat);
   CHECK_SYNC("hl_matrix_mul_vector");
 }
 

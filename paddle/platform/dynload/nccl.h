@@ -15,7 +15,7 @@
 #pragma once
 
 #include <dlfcn.h>
-#include <nccl.h>
+#include <rccl.h>
 #include <mutex>
 #include "paddle/platform/call_once.h"
 #include "paddle/platform/dynload/dynamic_loader.h"
@@ -45,7 +45,7 @@ extern void* nccl_dso_handle;
 #define DECLARE_DYNAMIC_LOAD_NCCL_WRAP(__name) \
   struct DynLoad__##__name {                   \
     template <typename... Args>                \
-    ncclResult_t operator()(Args... args) {    \
+    rcclResult_t operator()(Args... args) {    \
       return __name(args...);                  \
     }                                          \
   };                                           \
@@ -53,18 +53,17 @@ extern void* nccl_dso_handle;
 #endif
 
 #define NCCL_RAND_ROUTINE_EACH(__macro) \
-  __macro(ncclCommInitAll);             \
-  __macro(ncclGetUniqueId);             \
-  __macro(ncclCommInitRank);            \
-  __macro(ncclCommDestroy);             \
-  __macro(ncclCommCount);               \
-  __macro(ncclCommCuDevice);            \
-  __macro(ncclCommUserRank);            \
-  __macro(ncclAllReduce);               \
-  __macro(ncclBcast);                   \
-  __macro(ncclAllGather);               \
-  __macro(ncclReduce);                  \
-  __macro(ncclGetErrorString);
+  __macro(rcclCommInitAll);             \
+  __macro(rcclGetUniqueId);             \
+  __macro(rcclCommInitRank);            \
+  __macro(rcclCommDestroy);             \
+  __macro(rcclCommCount);               \
+  __macro(rcclCommCuDevice);            \
+  __macro(rcclCommUserRank);            \
+  __macro(rcclAllReduce);               \
+  __macro(rcclBcast);                   \
+  __macro(rcclAllGather);               \
+  __macro(rcclGetErrorString);
 
 NCCL_RAND_ROUTINE_EACH(DECLARE_DYNAMIC_LOAD_NCCL_WRAP)
 

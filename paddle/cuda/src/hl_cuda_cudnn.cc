@@ -177,12 +177,6 @@ void hl_cudnn_init(cudnnHandle_t* cudnn_handle, hipStream_t stream) {
       << "(header v5 with libcudnn v5) Or"
       << "(header v6 with libcudnn v6).";
 
-  CHECK(!(CUDNN_VERSION < 6000 && CUDNN_VERSION >= 5000 && CUDA_VERSION < 7050))
-      << "cudnn v5 requires cuda version >= 7.5";
-
-  CHECK(!(CUDNN_VERSION >= 6000 && CUDA_VERSION < 8000))
-      << "cudnn v6 requires cuda version >= 8.0";
-
   CHECK_CUDNN(dynload::cudnnCreate(cudnn_handle));
   CHECK_CUDNN(dynload::cudnnSetStream(*cudnn_handle, stream));
 
