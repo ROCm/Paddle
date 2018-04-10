@@ -203,7 +203,7 @@ class ScopedConvolutionDescriptor {
     }
 
     PADDLE_ENFORCE(dynload::miopenInitConvolutionDescriptor(
-        desc_, miopenTranspose, pads[0], pads[1], strides[0], strides[1], 
+        desc_, miopenConvolution, pads[0], pads[1], strides[0], strides[1],
 	dilations[0], dilations[1]));
     return desc_;
   }

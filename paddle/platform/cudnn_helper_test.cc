@@ -85,7 +85,7 @@ TEST(CudnnHelper, ScopedConvolutionDescriptor) {
     EXPECT_EQ(strides[i], src_strides[i]);
     EXPECT_EQ(dilations[i], src_dilations[i]);
   }
-  EXPECT_EQ(mode, miopenTranspose);
+  EXPECT_EQ(mode, miopenConvolution);
 }
 
 TEST(CudnnHelper, ScopedPoolingDescriptor) {

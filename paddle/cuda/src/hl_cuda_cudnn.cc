@@ -579,7 +579,7 @@ void hl_create_convolution_descriptor(hl_convolution_descriptor* conv,
   CHECK_NOTNULL(hl_conv);
   CHECK_CUDNN(dynload::miopenCreateConvolutionDescriptor(&hl_conv->desc));
 
-  miopenConvolutionMode_t mode = miopenTranspose;//CUDNN_CROSS_CORRELATION;
+  miopenConvolutionMode_t mode = miopenConvolution;//CUDNN_CROSS_CORRELATION;
 
   if (dilation_h > 1 || dilation_w > 1) {
   }
@@ -620,7 +620,7 @@ void hl_reset_convolution_descriptor(hl_convolution_descriptor conv,
   CHECK_NOTNULL(filter);
 
   miopenConvolutionDescriptor_t conv_desc = GET_CONVOLUTION_DESCRIPTOR(conv);
-  miopenConvolutionMode_t mode = miopenTranspose;//CUDNN_CROSS_CORRELATION;
+  miopenConvolutionMode_t mode = miopenConvolution;//CUDNN_CROSS_CORRELATION;
 
   CHECK_CUDNN(dynload::miopenInitConvolutionDescriptor(conv_desc,
                                                        mode,
