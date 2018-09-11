@@ -184,8 +184,8 @@ class CUDNNConvTransposeGradOpKernel : public framework::OpKernel<T> {
     if (input_grad) {
       // choose backward algorithm for data
       PADDLE_ENFORCE(platform::dynload::miopenFindConvolutionForwardAlgorithm(
-          handle, cudnn_input_desc, (const void*)input_data, cudnn_filter_desc, 
-          (const void*)filter_data,cudnn_conv_desc, cudnn_output_desc, (void*)output_grad_data,
+          handle, cudnn_output_desc, (const void*)output_grad_data, cudnn_filter_desc, 
+          (const void*)filter_data,cudnn_conv_desc, cudnn_input_desc, (void*)input_data,
           1, &algoCount, &perfRes, (void*)cudnn_workspace, workspace_size_in_bytes, false));
       data_algo=perfRes.fwd_algo;
       PADDLE_ENFORCE(platform::dynload::miopenConvolutionForwardGetWorkSpaceSize(
@@ -196,11 +196,23 @@ class CUDNNConvTransposeGradOpKernel : public framework::OpKernel<T> {
 
     if (filter_grad) {
       // choose backward algorithm for filter
+      #if 0
       PADDLE_ENFORCE(
           platform::dynload::miopenFindConvolutionBackwardWeightsAlgorithm(
-              handle, cudnn_input_desc, (const void*)input_data,cudnn_filter_desc, (const void*)filter_data,
-              cudnn_conv_desc, cudnn_output_desc, (void*)output_grad_data, 1, &algoCount,
+              handle, cudnn_output_desc, (const void*)output_grad_data,cudnn_filter_desc, (const void*)filter_data,
+              cudnn_conv_desc, cudnn_input_desc, (void*)input_data, 1, &algoCount,
 	      &perfRes, (void*)cudnn_workspace,workspace_size_in_bytes,false));
+      #endif
+      PADDLE_ENFORCE(
+          platform::dynload::miopenFindConvolutionBackwardWeightsAlgorithm(
+            handle,
+            cudnn_input_desc, (const void*)input_data,
+            cudnn_output_desc, (const void*)output_grad_data,
+            cudnn_conv_desc,
+            cudnn_filter_desc, (void*)filter_data,
+            1, &algoCount, &perfRes,
+            (void*)cudnn_workspace, workspace_size_in_bytes, false));
+
       filter_algo=perfRes.bwd_weights_algo;
       // get workspace for backwards filter algorithm
       PADDLE_ENFORCE(
@@ -226,7 +238,7 @@ class CUDNNConvTransposeGradOpKernel : public framework::OpKernel<T> {
       T* input_grad_data = input_grad->mutable_data<T>(ctx.GetPlace());
       // Because beta is zero, it is unnecessary to reset input_grad.
       for (int g = 0; g < groups; g++) {
-        PADDLE_ENFORCE(platform::dynload::miopenConvolutionForward(
+      PADDLE_ENFORCE(platform::dynload::miopenConvolutionForward(
             handle, &alpha, cudnn_output_desc, output_grad_data + output_grad_offset * g,
             cudnn_filter_desc, filter_data + filter_offset * g, cudnn_conv_desc, data_algo,
             &beta, cudnn_input_desc, input_grad_data + input_offset * g, cudnn_workspace, 
