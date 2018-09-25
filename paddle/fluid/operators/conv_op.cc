@@ -38,6 +38,16 @@ void ConvOp::InferShape(framework::InferShapeContext* ctx) const {
   PADDLE_ENFORCE(ctx->HasOutput("Output"),
                  "Output(Output) of ConvOp should not be null.");
 
+#if 0
+  PADDLE_ENFORCE(ctx->HasInput("Algorithm"),
+                 "Input(Algorithm) of ConvOp should not be null.");
+  PADDLE_ENFORCE(ctx->HasOutput("AlgorithmOut"),
+                 "Output(AlgorithmOut) of ConvOp should not be null.");*/
+
+  PADDLE_ENFORCE_EQ(ctx->Inputs("Algorithm")[0], ctx->Outputs("Algorithm")[0],
+                    "Algorithm and AlgorithmOut should share the same memory");
+  ctx->SetOutputDim("AlgorithmOut", {3});
+#endif
   auto in_dims = ctx->GetInputDim("Input");
   auto filter_dims = ctx->GetInputDim("Filter");
   std::vector<int> strides = ctx->Attrs().Get<std::vector<int>>("strides");
@@ -129,9 +139,13 @@ Conv2DOpMaker::Conv2DOpMaker(OpProto* proto, OpAttrChecker* op_checker)
            "H is the height of the filter, and W is the width of the filter. "
            "If the groups attribute is greater than 1, C equals the number of "
            "input image channels divided by the groups.");
+  AddInput("Algorithm",
+           "Selected algorithm for conv2d");
   AddOutput("Output",
             "(Tensor) The output tensor of convolution operator. "
             "The format of output tensor is also NCHW.");
+  AddOutput("AlgorithmOut",
+            "Tuned algorithm for conv2d");
   AddAttr<std::vector<int>>("strides",
                             "(vector<int> default:{1, 1}), the "
                             "strides(h_stride, w_stride) of "
@@ -225,9 +239,13 @@ Conv3DOpMaker::Conv3DOpMaker(OpProto* proto, OpAttrChecker* op_checker)
            "is the width of the filter."
            "If the groups attribute is greater than 1, C equals the number of "
            "input image channels divided by the groups.");
+  AddInput("Algorithm",
+           "Selected algorithm for conv3d");
   AddOutput("Output",
             "(Tensor) The output tensor of convolution operator."
             "The format of output tensor is also NCDHW.");
+  AddOutput("AlgorithmOut",
+            "Tuned algorithm for conv3d");
   AddAttr<std::vector<int>>("strides",
                             "(vector<int>, default:{1, 1, 1}), the "
                             "strides(d_stride, h_stride, w_stride) of "

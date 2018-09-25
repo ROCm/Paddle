@@ -1293,15 +1293,33 @@ def conv2d(input,
         dtype=dtype,
         default_initializer=_get_default_param_initializer())
 
+    #print 'conv2d {0:2d} {1:3d}'.format(filter_size[0], filter_size[1])
+    #algorithm = helper.create_tmp_variable(dtype)
+    #algorithm = helper.create_parameter(
+    #    attr=ParamAttr(name="miopen_algorithm", initializer=Constant(0), trainable=False),
+    #    shape=[3],
+    #    dtype='int')
+    #algorithm = helper.create_parameter(
+    #    attr=ParamAttr(name=None, initializer=Constant(0), trainable=False),
+    #    shape=[3],
+    #    dtype='int')
+    #algorithm.stop_gradient = True
+    algorithm = helper.create_global_variable(dtype='int', shape=[3], persistable=True, nam=None);
+
     pre_bias = helper.create_tmp_variable(dtype)
+
+    algorithm_out = algorithm
 
     helper.append_op(
         type=l_type,
         inputs={
             'Input': input,
             'Filter': filter_param,
+            'Algorithm': algorithm,
         },
-        outputs={"Output": pre_bias},
+        outputs={'Output': pre_bias,
+                 'AlgorithmOut': algorithm_out,
+        },
         attrs={
             'strides': stride,
             'paddings': padding,

@@ -19,6 +19,7 @@ limitations under the License. */
 #include "paddle/fluid/platform/assert.h"
 #include "paddle/fluid/platform/miopen_helper.h"
 #include "paddle/fluid/platform/float16.h"
+#include <sys/time.h>
 
 namespace paddle {
 namespace operators {
@@ -43,6 +44,9 @@ class CUDNNConvOpKernel : public framework::OpKernel<T> {
     auto* input = ctx.Input<Tensor>("Input");
     auto* filter = ctx.Input<Tensor>("Filter");
     auto* output = ctx.Output<Tensor>("Output");
+    auto* alg    = ctx.Input<Tensor>("Algorithm");
+    auto* algOut = ctx.Output<Tensor>("AlgorithmOut");
+    algOut->mutable_data<int>(platform::CPUPlace());
 
     std::vector<int> strides = ctx.Attr<std::vector<int>>("strides");
     std::vector<int> paddings = ctx.Attr<std::vector<int>>("paddings");
@@ -126,13 +130,45 @@ class CUDNNConvOpKernel : public framework::OpKernel<T> {
     ScalingParamType<T> alpha = 1.0f, beta = 0.0f;
     miopenConvAlgoPerf_t perfRes;
     int algoCount = 0;
+
+    VLOG(3) << "X Tensor: " << input->dims()[0] << " " << input->dims()[1] << " " << input->dims()[2] << " " << input->dims()[3];
+    VLOG(3) << "W Tensor: " << filter->dims()[0] << " " << filter->dims()[1] << " " << filter->dims()[2] << " " << filter->dims()[3];
+    VLOG(3) << "Y Tensor: " << output->dims()[0] << " " << output->dims()[1] << " " << output->dims()[2] << " " << output->dims()[3];
+    VLOG(3) << "ctx: " << &ctx << " op: " << &ctx.op() << " scope: " << &ctx.scope();
+    VLOG(3) << "alg: " << alg << " get alg str: " << ctx.op().Input("Algorithm");
+    VLOG(3) << "get alg ptr: " << ctx.scope().FindVar(ctx.op().Input("Algorithm"));
+    VLOG(3) << "Input: " << alg->data<int>() << " Output: " << algOut->mutable_data<int>(platform::CPUPlace());
+    int pre_alg = (alg->data<int>())[0];
+    if (pre_alg == 0)
+    {
+        PADDLE_ENFORCE(platform::dynload::miopenFindConvolutionForwardAlgorithm(
+            handle, cudnn_input_desc, input_data,
+            cudnn_filter_desc, filter_data,
+            cudnn_conv_desc, cudnn_output_desc, output_data,
+            1, &algoCount, &perfRes, cudnn_workspace, workspace_size_in_bytes, false));
+        (algOut->data<int>())[0] = (int)(perfRes.fwd_algo) + 1;
+        VLOG(3) << "Find Kernel: store " << (algOut->data<int>()) << " kernel :" << perfRes.fwd_algo;
+    }
+    else
+    {
+        perfRes.fwd_algo = (miopenConvFwdAlgorithm_t)(pre_alg - 1);
+                           //((algOut->mutable_data<int>(platform::CPUPlace()))[0] - 1);
+        VLOG(3) << "Find Kernel:  load  " << (alg->data<int>()) << " kernel :" << perfRes.fwd_algo;
+    }
+
     for (int i = 0; i < groups; i++) {
       // ------------------- cudnn conv algorithm ---------------------
+#if 0
+      struct timeval before, after;
+      gettimeofday(&before, nullptr);
       PADDLE_ENFORCE(platform::dynload::miopenFindConvolutionForwardAlgorithm(
           handle, cudnn_input_desc, input_data + i * group_offset_in,
           cudnn_filter_desc, filter_data + i * group_offset_filter,
-	  cudnn_conv_desc, cudnn_output_desc, output_data + i * group_offset_out,
+	        cudnn_conv_desc, cudnn_output_desc, output_data + i * group_offset_out,
           1, &algoCount, &perfRes, cudnn_workspace, workspace_size_in_bytes, false));
+      gettimeofday(&after, nullptr);
+      VLOG(3) << "miopenFindConvolutionForwardAlgorithm: takes "<< (after.tv_sec - before.tv_sec) * 1000000 + after.tv_usec - before.tv_usec << " us";
+#endif
       // ------------------- cudnn conv forward ---------------------
       PADDLE_ENFORCE(platform::dynload::miopenConvolutionForward(
           handle, &alpha, cudnn_input_desc, input_data + i * group_offset_in,
@@ -157,6 +193,8 @@ class CUDNNConvGradOpKernel : public framework::OpKernel<T> {
     auto output_grad = ctx.Input<Tensor>(framework::GradVarName("Output"));
     auto input_grad = ctx.Output<Tensor>(framework::GradVarName("Input"));
     auto filter_grad = ctx.Output<Tensor>(framework::GradVarName("Filter"));
+    //auto* alg    = ctx.Input<Tensor>("Algorithm");
+    //auto* algOut = ctx.Output<Tensor>("AlgorithmOut");
 
     const T* input_data = input->data<T>();
     const T* output_grad_data = output_grad->data<T>();
@@ -268,8 +306,29 @@ class CUDNNConvGradOpKernel : public framework::OpKernel<T> {
     if (input_grad) {
       T* input_grad_data = input_grad->mutable_data<T>(ctx.GetPlace());
       // Because beta is zero, it is unnecessary to reset input_grad.
+#if 0
+      if ((algOut->mutable_data<int>(platform::CPUPlace()))[1] == 0)
+      {
+        PADDLE_ENFORCE(platform::dynload::miopenFindConvolutionBackwardDataAlgorithm(
+          handle,
+          cudnn_output_grad_desc, output_grad_data,
+          cudnn_filter_desc, filter_data,
+          cudnn_conv_desc,
+          cudnn_input_desc, input_grad_data,
+          1, &algoCount, &perfRes, cudnn_workspace, workspace_size_in_bytes, false));
+        (algOut->mutable_data<int>(platform::CPUPlace()))[1] = (int)(perfRes.bwd_data_algo) + 1;
+      }
+      else
+      {
+        perfRes.bwd_data_algo = (miopenConvBwdDataAlgorithm_t)
+                                ((algOut->mutable_data<int>(platform::CPUPlace()))[1] - 1);
+      }
+#endif
 
       for (int i = 0; i < groups; i++) {
+#if 1
+      struct timeval before, after;
+      gettimeofday(&before, nullptr);
         PADDLE_ENFORCE(platform::dynload::miopenFindConvolutionBackwardDataAlgorithm(
             handle,
             cudnn_output_grad_desc, output_grad_data + i * group_offset_out,
@@ -277,6 +336,9 @@ class CUDNNConvGradOpKernel : public framework::OpKernel<T> {
             cudnn_conv_desc,
             cudnn_input_desc, input_grad_data + i * group_offset_in,
             1, &algoCount, &perfRes, cudnn_workspace, workspace_size_in_bytes, false));
+            gettimeofday(&after, nullptr);
+            //VLOG(3) << "miopenFindConvolutionBackwardDataAlgorithm: takes "<< (after.tv_sec - before.tv_sec) * 1000000 + after.tv_usec - before.tv_usec << " us";
+#endif
         PADDLE_ENFORCE(platform::dynload::miopenConvolutionBackwardData(
             handle, &alpha,
             cudnn_output_grad_desc, output_grad_data + i * group_offset_out,
@@ -290,7 +352,30 @@ class CUDNNConvGradOpKernel : public framework::OpKernel<T> {
     if (filter_grad) {
       T* filter_grad_data = filter_grad->mutable_data<T>(ctx.GetPlace());
       // Because beta is zero, it is unnecessary to reset filter_grad.
+#if 0
+      if ((algOut->mutable_data<int>(platform::CPUPlace()))[2] == 0)
+      {
+        PADDLE_ENFORCE(platform::dynload::miopenFindConvolutionBackwardWeightsAlgorithm(
+        handle,
+        cudnn_output_grad_desc, output_grad_data,
+        cudnn_input_desc, input_data,
+        cudnn_conv_desc,
+        cudnn_filter_desc, filter_grad_data,
+        1, &algoCount, &perfRes,
+        cudnn_workspace, workspace_size_in_bytes, false));
+        (algOut->mutable_data<int>(platform::CPUPlace()))[2] = (int)(perfRes.bwd_weights_algo) + 1;
+      }
+      else
+      {
+          perfRes.bwd_weights_algo = (miopenConvBwdWeightsAlgorithm_t)
+                                     ((algOut->mutable_data<int>(platform::CPUPlace()))[2] - 1);
+      }
+#endif
+
       for (int i = 0; i < groups; i++) {
+#if 1
+      struct timeval before, after;
+      gettimeofday(&before, nullptr);
         PADDLE_ENFORCE(platform::dynload::miopenFindConvolutionBackwardWeightsAlgorithm(
             handle,
             cudnn_output_grad_desc, output_grad_data + i * group_offset_out,
@@ -299,6 +384,9 @@ class CUDNNConvGradOpKernel : public framework::OpKernel<T> {
             cudnn_filter_desc, filter_grad_data + i * group_offset_filter,
             1, &algoCount, &perfRes,
             cudnn_workspace, workspace_size_in_bytes, false));
+            gettimeofday(&after, nullptr);
+            //VLOG(3) << "miopenFindConvolutionBackwardWeightsAlgorithm: takes "<< (after.tv_sec - before.tv_sec) * 1000000 + after.tv_usec - before.tv_usec << " us";
+#endif
         PADDLE_ENFORCE(platform::dynload::miopenConvolutionBackwardWeights(
             handle, &alpha,
             cudnn_output_grad_desc, output_grad_data + i * group_offset_out,
