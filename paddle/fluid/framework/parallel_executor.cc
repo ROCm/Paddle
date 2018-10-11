@@ -307,6 +307,8 @@ void ParallelExecutor::FeedAndSplitTensorIntoLocalScopes(
 }
 
 ParallelExecutor::~ParallelExecutor() {
+  member_->nccl_ctxs_.reset(NULL);
+  member_->executor_.reset(NULL);
   if (member_->own_local_scope_) {
     for (size_t i = 1; i < member_->local_scopes_.size(); ++i) {
       member_->global_scope_->DeleteScope(member_->local_scopes_[i]);
