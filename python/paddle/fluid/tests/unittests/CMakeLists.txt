@@ -1,6 +1,11 @@
 file(GLOB TEST_OPS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "test_*.py")
 string(REPLACE ".py" "" TEST_OPS "${TEST_OPS}")
 
+if(WITH_AMD_GPU)
+    list(REMOVE_ITEM TEST_OPS test_batch_norm_op)
+    list(REMOVE_ITEM TEST_OPS test_softmax_with_cross_entropy_op)
+endif()
+
 # The MKLDNN tests are skiped when the MKLDNN flag is OFF
 if(NOT WITH_MKLDNN)
     foreach(src ${TEST_OPS})
