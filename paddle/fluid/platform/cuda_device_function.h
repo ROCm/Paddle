@@ -101,6 +101,23 @@ HOSTDEVICE T Infinity() {
   return INFINITY;
 }
 
+#ifdef PADDLE_WITH_HIP
+template <typename T>
+__device__ T reduceSum(T val, int tid, int len) {
+  const int warpSize = 32;
+  __shared__ T shm[warpSize*warpSize];
+  shm[tid] = val;
+
+  __syncthreads();
+
+  if (tid == 0 ) {
+    for (int i = 1 ; i < len ; i++)
+      val += shm[i];
+  }
+
+  return val;
+}
+#else
 template <typename T>
 __device__ T reduceSum(T val, int tid, int len) {
   // NOTE(zcd): The warp size should be taken from the
@@ -134,6 +151,7 @@ __device__ T reduceSum(T val, int tid, int len) {
   }
   return val;
 }
+#endif
 
 }  // namespace platform
 }  // namespace paddle
