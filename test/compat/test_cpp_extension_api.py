@@ -26,9 +26,10 @@ from paddle.utils.cpp_extension import (
 )
 
 
-@unittest.skipIf(not core.is_compiled_with_cuda(), 'should compile with cuda.')
 class TestGetCudaArchFlags(unittest.TestCase):
     def setUp(self):
+        if not core.is_compiled_with_cuda() or core.is_compiled_with_rocm():
+            self.skipTest('should compile with cuda (not rocm).')
         self._old_env = dict(os.environ)
 
     def tearDown(self):
@@ -90,6 +91,12 @@ class TestGetCudaArchFlags(unittest.TestCase):
     def test_skip_paddle_extension_name_flag(self):
         flags = _get_cuda_arch_flags(cflags=["-DPADDLE_EXTENSION_NAME=my_ext"])
         self.assertNotEqual(flags, [])
+
+    def test_rocm_returns_empty_flags(self):
+        with mock.patch.object(
+            extension_utils.core, "is_compiled_with_rocm", return_value=True
+        ):
+            self.assertEqual(_get_cuda_arch_flags(), [])
 
 
 class TestCppExtensionUtils(unittest.TestCase):
