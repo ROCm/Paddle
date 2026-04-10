@@ -30,7 +30,9 @@
 #include "paddle/phi/core/dense_tensor.h"
 #include "paddle/phi/core/memory/malloc.h"
 
-#ifdef PADDLE_WITH_CUDA
+#ifdef PADDLE_WITH_HIP
+#include <hip/hip_runtime.h>
+#elif defined(PADDLE_WITH_CUDA)
 #include <cuda_runtime_api.h>
 #endif
 
@@ -724,9 +726,13 @@ class Tensor : public TensorBase {
   void record_stream(at::Stream s) const;
 #if defined(PADDLE_WITH_CUDA) || defined(PADDLE_WITH_HIP)
   void record_stream(at::cuda::CUDAStream s) const;
-  // TODO(youge325): Remove after DeepEP paddle branch is updated to use
-  // at::Stream
+// TODO(youge325): Remove after DeepEP paddle branch is updated to use
+// at::Stream
+#ifdef PADDLE_WITH_HIP
+  void record_stream(hipStream_t s) const;
+#else
   void record_stream(cudaStream_t s) const;
+#endif
 #endif
 
   Tensor var(int dim) const { return var(at::IntArrayRef{dim}, true, false); }
