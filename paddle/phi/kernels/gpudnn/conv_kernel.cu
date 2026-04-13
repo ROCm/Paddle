@@ -561,8 +561,13 @@ void Conv3DCudnnKernel(const Context& dev_ctx,
 }  // namespace phi
 
 #ifdef PADDLE_WITH_HIP
-PD_REGISTER_KERNEL(
-    conv2d, GPUDNN, ALL_LAYOUT, phi::ConvCudnnKernel, float, phi::float16) {}
+PD_REGISTER_KERNEL(conv2d,
+                   GPUDNN,
+                   ALL_LAYOUT,
+                   phi::ConvCudnnKernel,
+                   float,
+                   phi::float16,
+                   phi::bfloat16) {}
 
 PD_REGISTER_KERNEL(
     conv3d, GPUDNN, ALL_LAYOUT, phi::Conv3DCudnnKernel, float, phi::float16) {}
