@@ -62,9 +62,6 @@ inline miopenDataType_t ToCudnnDataType(const DataType& t) {
     case DataType::FLOAT32:
       type = miopenFloat;
       break;
-    case DataType::BFLOAT16:
-      type = miopenBFloat16;
-      break;
     default:
       break;
   }

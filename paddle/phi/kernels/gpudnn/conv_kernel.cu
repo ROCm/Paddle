@@ -561,29 +561,18 @@ void Conv3DCudnnKernel(const Context& dev_ctx,
 }  // namespace phi
 
 #ifdef PADDLE_WITH_HIP
-PD_REGISTER_KERNEL(conv2d,
-                   GPUDNN,
-                   ALL_LAYOUT,
-                   phi::ConvCudnnKernel,
-                   float,
-                   phi::float16,
-                   phi::bfloat16) {}
+PD_REGISTER_KERNEL(
+    conv2d, GPUDNN, ALL_LAYOUT, phi::ConvCudnnKernel, float, phi::float16) {}
 
-PD_REGISTER_KERNEL(conv3d,
-                   GPUDNN,
-                   ALL_LAYOUT,
-                   phi::Conv3DCudnnKernel,
-                   float,
-                   phi::float16,
-                   phi::bfloat16) {}
+PD_REGISTER_KERNEL(
+    conv3d, GPUDNN, ALL_LAYOUT, phi::Conv3DCudnnKernel, float, phi::float16) {}
 
 PD_REGISTER_KERNEL(depthwise_conv2d,
                    GPUDNN,
                    ALL_LAYOUT,
                    phi::DepthwiseConvCudnnKernel,
                    float,
-                   phi::float16,
-                   phi::bfloat16) {}
+                   phi::float16) {}
 
 #else
 #if CUDNN_VERSION_MIN(8, 1, 0)
@@ -635,3 +624,4 @@ PD_REGISTER_KERNEL(conv3d,
 
 #endif
 
+// todo register bfloat16

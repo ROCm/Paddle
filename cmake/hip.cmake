@@ -185,11 +185,24 @@ set(HIP_CLANG_FLAGS ${HIP_CXX_FLAGS})
 # Ask hcc to generate device code during compilation so we can use
 # host linker to link.
 list(APPEND HIP_HCC_FLAGS -fno-gpu-rdc)
-list(APPEND HIP_HCC_FLAGS --offload-arch=gfx942) # MI300
-list(APPEND HIP_HCC_FLAGS --offload-arch=gfx950) # MI350X
 list(APPEND HIP_CLANG_FLAGS -fno-gpu-rdc)
-list(APPEND HIP_CLANG_FLAGS --offload-arch=gfx942) # MI300
-list(APPEND HIP_CLANG_FLAGS --offload-arch=gfx950) # MI350X
+
+# Build multi-arch ROCm binaries by default, including Radeon RDNA4.
+# Users can override via -DPADDLE_ROCM_OFFLOAD_ARCHS=... or the
+# PADDLE_ROCM_OFFLOAD_ARCHS environment variable.
+set(
+  PADDLE_ROCM_OFFLOAD_ARCHS
+  "gfx942;gfx950;gfx1100;gfx1101;gfx1102;gfx1200;gfx1201"
+  CACHE STRING "ROCm offload architectures for HIP builds")
+if(DEFINED ENV{PADDLE_ROCM_OFFLOAD_ARCHS}
+   AND NOT "$ENV{PADDLE_ROCM_OFFLOAD_ARCHS}" STREQUAL "")
+  set(PADDLE_ROCM_OFFLOAD_ARCHS "$ENV{PADDLE_ROCM_OFFLOAD_ARCHS}")
+endif()
+string(REPLACE "," ";" PADDLE_ROCM_OFFLOAD_ARCHS "${PADDLE_ROCM_OFFLOAD_ARCHS}")
+foreach(OFFLOAD_ARCH IN LISTS PADDLE_ROCM_OFFLOAD_ARCHS)
+  list(APPEND HIP_HCC_FLAGS --offload-arch=${OFFLOAD_ARCH})
+  list(APPEND HIP_CLANG_FLAGS --offload-arch=${OFFLOAD_ARCH})
+endforeach()
 
 if(HIP_COMPILER STREQUAL clang)
   set(hip_library_name amdhip64)
