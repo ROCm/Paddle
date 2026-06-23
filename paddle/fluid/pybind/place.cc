@@ -473,12 +473,7 @@ void BindPlace(pybind11::module &m) {  // NOLINT
 #endif
   });
   m.def("is_bfloat16_supported", [](const GPUPlace &place) -> bool {
-  // Only GPUs with Compute Capability >= 80 support bfloat16
-#ifdef PADDLE_WITH_HIP
-    return true;
-#else
-    return platform::GetGPUComputeCapability(place.device) >= 80;
-#endif
+    return platform::IsBFloat16Supported(place.device);
   });
 #endif
   py::class_<phi::XPUPlace, phi::Place> xpuplace(m, "XPUPlace", R"DOC(

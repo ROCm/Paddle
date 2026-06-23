@@ -190,13 +190,7 @@ def _is_gpu_bfloat16_supported() -> bool:
     """
     Judge whether current gpu support bfloat16 amp.
     """
-    prop = paddle.device.cuda.get_device_capability()
-    cuda_version = paddle.version.cuda()
-    if cuda_version is not None and cuda_version != 'False':
-        cuda_version_check = int(cuda_version.split('.')[0]) >= 11
-    else:
-        cuda_version_check = False
-    return prop[0] >= 8 and cuda_version_check or paddle.is_compiled_with_rocm()
+    return core.is_bfloat16_supported(_current_expected_place())
 
 
 def _is_xpu_float16_supported() -> bool:
@@ -636,11 +630,16 @@ def amp_guard(
                     )
                     enable = False
                 elif (dtype == 'bfloat16') and not _is_gpu_bfloat16_supported():
-                    prop = paddle.device.cuda.get_device_capability()
-                    cuda_version = paddle.version.cuda()
-                    warnings.warn(
-                        f"For bfloat16, amp only support NVIDIA GPU with Compute Capability 8.0 or higher and CUDA Version 11.0 or higher, current GPU is: {paddle.device.cuda.get_device_name()}, with Compute Capability: {prop[0]}.{prop[1]}, current CUDA Version is: {cuda_version}."
-                    )
+                    if paddle.is_compiled_with_rocm():
+                        warnings.warn(
+                            f"For bfloat16, amp only supports ROCm GPUs with native bfloat16 support, current GPU is: {paddle.device.cuda.get_device_name()}."
+                        )
+                    else:
+                        prop = paddle.device.cuda.get_device_capability()
+                        cuda_version = paddle.version.cuda()
+                        warnings.warn(
+                            f"For bfloat16, amp only support NVIDIA GPU with Compute Capability 8.0 or higher and CUDA Version 11.0 or higher, current GPU is: {paddle.device.cuda.get_device_name()}, with Compute Capability: {prop[0]}.{prop[1]}, current CUDA Version is: {cuda_version}."
+                        )
                     enable = False
 
         if not enable:

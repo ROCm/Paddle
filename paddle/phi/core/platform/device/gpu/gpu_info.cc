@@ -649,6 +649,10 @@ int GetGPUDriverVersion(int id) {
 
 bool TensorCoreAvailable() { return phi::backends::gpu::TensorCoreAvailable(); }
 
+bool IsBFloat16Supported(int id) {
+  return phi::backends::gpu::IsBFloat16Supported(id);
+}
+
 int GetGPUMultiProcessors(int id) {
   return phi::backends::gpu::GetGPUMultiProcessors(id);
 }

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
 import unittest
+from unittest.mock import patch
 
 import paddle
 import paddle.nn.functional as F
@@ -177,6 +179,30 @@ class TestSupportedTypeInfo(unittest.TestCase):
         self.assertEqual(res, True)
         res = paddle.amp.is_bfloat16_supported('gpu')
         self.assertEqual(res, True)
+
+    def test_auto_cast_gpu_bf16_uses_core_support(self):
+        auto_cast_module = importlib.import_module('paddle.amp.auto_cast')
+        expected_place = object()
+        with (
+            patch.object(
+                auto_cast_module,
+                '_current_expected_place',
+                return_value=expected_place,
+            ),
+            patch.object(
+                auto_cast_module.core,
+                'is_bfloat16_supported',
+                return_value=False,
+            ) as support_check,
+            patch.object(
+                auto_cast_module.paddle,
+                'is_compiled_with_rocm',
+                return_value=True,
+            ),
+        ):
+            self.assertFalse(auto_cast_module._is_gpu_bfloat16_supported())
+
+        support_check.assert_called_once_with(expected_place)
 
     def test_device_value_error(self):
         self.assertRaises(
