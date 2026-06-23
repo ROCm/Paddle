@@ -17,16 +17,28 @@ limitations under the License. */
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
+#include <cstring>
 #include <iostream>
 
 #include "paddle/fluid/framework/lod_tensor.h"
 
-#if defined(PADDLE_CUDA_BF16)
+#if defined(PADDLE_CUDA_BF16) || defined(PADDLE_HIP_BF16)
 namespace paddle {
 namespace platform {
 
 using bfloat16 = phi::dtype::bfloat16;
 using namespace phi::dtype;  // NOLINT
+
+namespace {
+
+float FloatFromBits(uint32_t bits) {
+  float value;
+  std::memcpy(&value, &bits, sizeof(value));
+  return value;
+}
+
+}  // namespace
 
 TEST(bfloat16, convert_float32_to_bfloat16_on_gpu) {
   // Convert float32 to bfloat16
@@ -38,10 +50,21 @@ TEST(bfloat16, convert_float32_to_bfloat16_on_gpu) {
   EXPECT_EQ((bfloat16(65536.0f)).x, 0x4780);
 }
 
+TEST(bfloat16, round_to_nearest_even_on_gpu) {
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f808000)).x, 0x3f80);
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f818000)).x, 0x3f82);
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f817fff)).x, 0x3f81);
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f818001)).x, 0x3f82);
+}
+
 TEST(bfloat16, assignment_operator_on_gpu) {
   // Assignment operator
   bfloat16 v_assign;
+#if defined(PADDLE_HIP_BF16)
+  v_assign = bfloat16(1.0f).to_hip_bfloat16();
+#else
   v_assign = bfloat16(1.0f).to_nv_bfloat16();
+#endif
   EXPECT_EQ(v_assign.x, 0x3f80);
   v_assign = 0.33333;
   EXPECT_EQ(v_assign.x, 0x3eab);

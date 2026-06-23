@@ -23,6 +23,11 @@
 #include <cuda_bf16.h>
 #endif
 
+#if defined(PADDLE_WITH_HIP) && defined(__HIPCC__)
+#define PADDLE_HIP_BF16
+#include <hip/hip_bf16.h>
+#endif
+
 #ifndef PADDLE_WITH_HIP
 #if !defined(_WIN32)
 #define PADDLE_ALIGN(x) __attribute__((aligned(x)))

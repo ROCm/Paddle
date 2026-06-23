@@ -32,7 +32,13 @@ struct PDDataTypeTraits<phi::dtype::float16> {
   using DataType = half;
 };
 
-#ifdef PADDLE_CUDA_BF16
+#if defined(PADDLE_HIP_BF16)
+template <>
+class PDDataTypeTraits<phi::dtype::bfloat16> {
+ public:
+  using DataType = __hip_bfloat16;
+};
+#elif defined(PADDLE_CUDA_BF16)
 template <>
 class PDDataTypeTraits<phi::dtype::bfloat16> {
  public:

@@ -11,6 +11,9 @@ limitations under the License. */
 
 #include "paddle/phi/common/bfloat16.h"
 
+#include <cstdint>
+#include <cstring>
+
 #include "paddle/phi/kernels/funcs/eigen/extensions.h"
 
 #include "gtest/gtest.h"
@@ -21,6 +24,16 @@ namespace paddle::platform {
 
 using bfloat16 = phi::dtype::bfloat16;
 using namespace phi::dtype;  // NOLINT
+
+namespace {
+
+float FloatFromBits(uint32_t bits) {
+  float value;
+  std::memcpy(&value, &bits, sizeof(value));
+  return value;
+}
+
+}  // namespace
 
 TEST(bfloat16, conversion_cpu) {
   // Conversion from float
@@ -68,6 +81,13 @@ TEST(bfloat16, conversion_cpu) {
   EXPECT_NEAR(static_cast<double>(bfloat16(0.33333)), 0.33333, 0.01);
   EXPECT_EQ(static_cast<int>(bfloat16(-1)), -1);
   EXPECT_EQ(static_cast<bool>(bfloat16(true)), true);
+}
+
+TEST(bfloat16, round_to_nearest_even_cpu) {
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f808000)).x, 0x3f80);
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f818000)).x, 0x3f82);
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f817fff)).x, 0x3f81);
+  EXPECT_EQ(bfloat16(FloatFromBits(0x3f818001)).x, 0x3f82);
 }
 
 TEST(bfloat16, arithmetic_cpu) {
