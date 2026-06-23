@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <array>
+#include <string>
 
 #include "paddle/phi/backends/gpu/gpu_info.h"
 
@@ -128,6 +129,16 @@ int GetGPUDriverVersion(int id) {
 }
 
 bool TensorCoreAvailable() { return false; }
+
+bool IsBFloat16Supported(int id) {
+  if (id == -1) {
+    id = GetCurrentDeviceId();
+  }
+  const auto &prop = GetDeviceProperties(id);
+  std::string arch(prop.gcnArchName);
+  return arch.rfind("gfx90a", 0) == 0 || arch.rfind("gfx94", 0) == 0 ||
+         arch.rfind("gfx95", 0) == 0;
+}
 
 int GetGPUMultiProcessors(int id) {
   PADDLE_ENFORCE_LT(id,

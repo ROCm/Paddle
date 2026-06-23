@@ -131,6 +131,13 @@ bool TensorCoreAvailable() {
   return driver_version >= 70;
 }
 
+bool IsBFloat16Supported(int id) {
+  if (id == -1) {
+    id = GetCurrentDeviceId();
+  }
+  return GetGPUComputeCapability(id) >= 80 && GetGPURuntimeVersion(id) >= 11000;
+}
+
 int GetGPUMultiProcessors(int id) {
   PADDLE_ENFORCE_LT(id,
                     GetGPUDeviceCount(),

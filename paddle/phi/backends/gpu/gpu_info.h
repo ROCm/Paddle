@@ -45,6 +45,9 @@ int GetGPUDriverVersion(int id);
 //! Whether the current device support TensorCore
 PADDLE_API bool TensorCoreAvailable();
 
+//! Whether the ith GPU supports native bfloat16.
+PADDLE_API bool IsBFloat16Supported(int id);
+
 //! Get the MultiProcessors of the ith GPU.
 int GetGPUMultiProcessors(int id);
 
