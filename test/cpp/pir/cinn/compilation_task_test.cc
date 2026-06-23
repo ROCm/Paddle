@@ -26,6 +26,9 @@
 #include "paddle/cinn/hlir/framework/pir/compilation_task.h"
 #include "paddle/cinn/hlir/framework/pir/utils.h"
 #include "paddle/cinn/hlir/framework/pir_compiler.h"
+#ifdef PADDLE_WITH_HIP
+#include "paddle/cinn/backends/hip/codegen_hip_dev.h"
+#endif
 #include "paddle/fluid/pir/dialect/operator/ir/op_dialect.h"
 #include "paddle/fluid/pir/dialect/operator/ir/pd_api.h"
 #include "paddle/fluid/pir/dialect/operator/ir/pd_op.h"
@@ -38,6 +41,19 @@ using cinn::hlir::framework::pir::OpLoweringGroupPtr;
 
 using ProgramInfo = std::tuple<std::shared_ptr<::pir::Program>,
                                std::vector<OpLoweringGroupPtr>>;
+#ifdef PADDLE_WITH_HIP
+TEST(CodeGenHipDevice, SourceHeaderIncludesBfloat16) {
+  const std::string& header =
+      cinn::backends::hip::CodeGenHipDevice::GetSourceHeader();
+
+  EXPECT_NE(header.find("#include \"bfloat16.h\""), std::string::npos);
+  EXPECT_NE(header.find("using cinn::common::bfloat16;"), std::string::npos);
+  EXPECT_NE(header.find("using cinn::common::bfloat168;"), std::string::npos);
+  EXPECT_NE(header.find("using cinn::common::bfloat164;"), std::string::npos);
+  EXPECT_NE(header.find("using cinn::common::bfloat162;"), std::string::npos);
+}
+#endif
+
 ProgramInfo BuildProgram(std::vector<int64_t> input_shape) {
   ::pir::IrContext* ctx = ::pir::IrContext::Instance();
   ctx->GetOrRegisterDialect<paddle::dialect::OperatorDialect>();

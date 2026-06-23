@@ -34,6 +34,15 @@
 #endif  // __CUDACC__
 #endif  // CINN_WITH_CUDA
 
+#ifdef CINN_WITH_HIP
+#include <hip/hip_runtime.h>
+#if defined(__HIPCC__) && HIP_VERSION >= 60100000
+#define __HIP_PLATFORM_AMD__
+#include <hip/hip_bfloat16.h>
+#define CINN_HIP_BF16
+#endif
+#endif  // CINN_WITH_HIP
+
 #ifdef __cplusplus
 
 #ifndef _WIN32
@@ -80,6 +89,9 @@ struct CINN_ALIGN(2) bfloat16 {
 #if defined(CINN_CUDA_BF16)
     __nv_bfloat16 tmp = __float2bfloat16(val);
     x = *reinterpret_cast<uint16_t*>(&tmp);
+#elif defined(CINN_HIP_BF16)
+    hip_bfloat16 tmp(val);
+    x = *reinterpret_cast<uint16_t*>(&tmp);
 #else
     std::memcpy(&x, reinterpret_cast<char*>(&val) + 2, 2);
 #endif
@@ -91,6 +103,12 @@ struct CINN_ALIGN(2) bfloat16 {
   }
 #endif
 
+#if defined(CINN_HIP_BF16)
+  __host__ __device__ inline explicit bfloat16(const hip_bfloat16& val) {
+    x = *reinterpret_cast<const uint16_t*>(&val);
+  }
+#endif
+
   template <class T>
   __host__ __device__ inline explicit bfloat16(const T& val)
       : x(bfloat16(static_cast<float>(val)).x) {}
@@ -99,6 +117,13 @@ struct CINN_ALIGN(2) bfloat16 {
 #if defined(CINN_CUDA_BF16)
   __host__ __device__ inline bfloat16& operator=(const __nv_bfloat16& val) {
     x = *reinterpret_cast<const unsigned short*>(&val);  // NOLINT
+    return *this;
+  }
+#endif
+
+#if defined(CINN_HIP_BF16)
+  __host__ __device__ inline bfloat16& operator=(const hip_bfloat16& val) {
+    x = *reinterpret_cast<const uint16_t*>(&val);
     return *this;
   }
 #endif
@@ -162,6 +187,8 @@ struct CINN_ALIGN(2) bfloat16 {
   __host__ __device__ inline operator float() const {
 #ifdef CINN_CUDA_BF16
     return __bfloat162float(*reinterpret_cast<const __nv_bfloat16*>(&x));
+#elif defined(CINN_HIP_BF16)
+    return static_cast<float>(*reinterpret_cast<const hip_bfloat16*>(&x));
 #else
     float val = 0.f;
     uint16_t temp = x;
@@ -174,6 +201,12 @@ struct CINN_ALIGN(2) bfloat16 {
 #ifdef CINN_CUDA_BF16
   __host__ __device__ inline __nv_bfloat16 to_nv_bfloat16() const {
     return *reinterpret_cast<const __nv_bfloat16*>(&x);
+  }
+#endif
+
+#ifdef CINN_HIP_BF16
+  __host__ __device__ inline hip_bfloat16 to_hip_bfloat16() const {
+    return *reinterpret_cast<const hip_bfloat16*>(&x);
   }
 #endif
 
