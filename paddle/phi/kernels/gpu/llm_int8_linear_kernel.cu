@@ -81,5 +81,10 @@ PD_REGISTER_KERNEL(llm_int8_linear,
                    GPU,
                    ALL_LAYOUT,
                    phi::LLMInt8LinearKernel,
-                   phi::float16,
-                   phi::bfloat16) {}
+                   phi::float16
+#if defined(PADDLE_WITH_CUDA)
+                   ,
+                   phi::bfloat16
+#endif
+) {
+}
