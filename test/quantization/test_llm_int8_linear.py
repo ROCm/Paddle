@@ -24,10 +24,17 @@ from paddle.base import core
 from paddle.framework import set_default_dtype
 
 
+def llm_int8_linear_not_supported():
+    return (
+        not core.is_compiled_with_cuda()
+        or paddle.is_compiled_with_rocm()
+        or paddle.device.cuda.get_device_capability()[0] < 8
+    )
+
+
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCase(unittest.TestCase):
     def config(self):
@@ -194,9 +201,8 @@ class LLMInt8LinearTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCase1(LLMInt8LinearTestCase):
     def config(self):
@@ -206,9 +212,8 @@ class LLMInt8LinearTestCase1(LLMInt8LinearTestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCase2(LLMInt8LinearTestCase):
     def config(self):
@@ -219,10 +224,9 @@ class LLMInt8LinearTestCase2(LLMInt8LinearTestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8
+    llm_int8_linear_not_supported()
     or not core.is_bfloat16_supported(core.CUDAPlace(0)),
-    "quantized_matmul requires CUDA_ARCH >= 8 or core is not support bfloat16",
+    "llm_int8_linear requires CUDA, CUDA_ARCH >= 8 and bfloat16 support",
 )
 class LLMInt8LinearTestCase4(LLMInt8LinearTestCase):
     def config(self):
@@ -232,9 +236,8 @@ class LLMInt8LinearTestCase4(LLMInt8LinearTestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCase5(LLMInt8LinearTestCase):
     def config(self):
@@ -245,9 +248,8 @@ class LLMInt8LinearTestCase5(LLMInt8LinearTestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCase7(LLMInt8LinearTestCase):
     def config(self):
@@ -259,9 +261,8 @@ class LLMInt8LinearTestCase7(LLMInt8LinearTestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCase8(LLMInt8LinearTestCase):
     def config(self):
@@ -274,9 +275,8 @@ class LLMInt8LinearTestCase8(LLMInt8LinearTestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCase10(LLMInt8LinearTestCase):
     def config(self):
@@ -289,10 +289,8 @@ class LLMInt8LinearTestCase10(LLMInt8LinearTestCase):
 
 
 @unittest.skipIf(
-    not core.is_compiled_with_cuda()
-    or not core.is_compiled_with_cuda()
-    or paddle.device.cuda.get_device_capability()[0] < 8,
-    "quantized_matmul requires CUDA_ARCH >= 8",
+    llm_int8_linear_not_supported(),
+    "llm_int8_linear requires CUDA and CUDA_ARCH >= 8",
 )
 class LLMInt8LinearTestCaseStatic(LLMInt8LinearTestCase):
     def config(self):
