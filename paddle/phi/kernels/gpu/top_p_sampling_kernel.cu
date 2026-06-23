@@ -15,6 +15,7 @@
 #include "paddle/phi/kernels/top_p_sampling_kernel.h"
 
 #ifdef PADDLE_WITH_HIP
+#include <hip/hip_bfloat16.h>
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
 #include <hiprand_kernel.h>
@@ -27,6 +28,9 @@
 #if defined(__CUDACC__) && CUDA_VERSION >= 11060
 #define CUDA_BFLOAT16_AVAILABLE
 #include <cuda_bf16.h>
+#endif
+#if defined(PADDLE_WITH_HIP) && HIP_VERSION >= 60100000
+#define HIP_BFLOAT16_AVAILABLE
 #endif
 
 #include "paddle/phi/backends/gpu/gpu_context.h"
@@ -62,6 +66,13 @@ struct DataTypeTraits<phi::float16> {
 template <>
 struct DataTypeTraits<phi::bfloat16> {
   using DataType = __nv_bfloat16;
+};
+#endif
+
+#ifdef HIP_BFLOAT16_AVAILABLE
+template <>
+struct DataTypeTraits<phi::bfloat16> {
+  using DataType = hip_bfloat16;
 };
 #endif
 
@@ -1260,7 +1271,7 @@ void TopPSamplingKernel(const Context& dev_ctx,
 
 }  // namespace phi
 
-#ifdef CUDA_BFLOAT16_AVAILABLE
+#if defined(CUDA_BFLOAT16_AVAILABLE) || defined(HIP_BFLOAT16_AVAILABLE)
 PD_REGISTER_KERNEL(top_p_sampling,
                    GPU,
                    ALL_LAYOUT,

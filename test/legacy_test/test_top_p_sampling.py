@@ -173,5 +173,31 @@ class TestTopPAPI(unittest.TestCase):
                 self.run_static(place)
 
 
+@unittest.skipIf(
+    not (core.is_compiled_with_cuda() or is_custom_device())
+    or not core.is_bfloat16_supported(get_device_place()),
+    "core is not compiled with CUDA or not support bfloat16",
+)
+class TestTopPAPIBF16(unittest.TestCase):
+    def test_dygraph_bfloat16(self):
+        with paddle.base.dygraph.guard(get_device_place()):
+            input_tensor = paddle.to_tensor(
+                [[0.6, 0.3, 0.1], [0.2, 0.5, 0.3]], dtype="float32"
+            ).astype("bfloat16")
+            topp_tensor = paddle.to_tensor(
+                [[0.8], [0.8]], dtype="float32"
+            ).astype("bfloat16")
+
+            out, ids = paddle.tensor.top_p_sampling(
+                input_tensor, topp_tensor, seed=2023
+            )
+
+            self.assertEqual(out.dtype, paddle.bfloat16)
+            self.assertEqual(ids.dtype, paddle.int64)
+            self.assertEqual(out.shape, [2, 1])
+            self.assertEqual(ids.shape, [2, 1])
+            ids.numpy()
+
+
 if __name__ == "__main__":
     unittest.main()
