@@ -1,4 +1,5 @@
 # Copyright (c) 2018 PaddlePaddle Authors. All Rights Reserved.
+# Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -406,11 +407,15 @@ endif()
 
 list(APPEND third_party_deps extern_eigen3 extern_gflags extern_glog
      extern_xxhash)
-list(APPEND third_party_deps extern_zlib extern_dlpack extern_threadpool
-     extern_lapack)
-if(NOT WITH_ROCM)
-  list(APPEND third_party_deps extern_warpctc extern_warprnnt)
-endif()
+list(
+  APPEND
+  third_party_deps
+  extern_zlib
+  extern_dlpack
+  extern_warpctc
+  extern_warprnnt
+  extern_threadpool
+  extern_lapack)
 
 if(WITH_MAGMA)
   list(APPEND third_party_deps extern_magma)
@@ -571,7 +576,35 @@ if(WITH_CUSPARSELT)
   list(APPEND third_party_deps extern_cusparselt)
 endif()
 
-if(WITH_ROCM)
+string(FIND "${CUDA_ARCH_BIN}" "90" ARCH_BIN_CONTAINS_90)
+if(NOT WITH_GPU
+   OR NOT WITH_DISTRIBUTE
+   OR (ARCH_BIN_CONTAINS_90 EQUAL -1))
+  set(WITH_NVSHMEM OFF)
+endif()
+if(WITH_SLEEF
+   AND NOT WITH_ROCM
+   AND NOT WIN32)
+  include(cmake/sleef.cmake)
+  if(TARGET extern_sleef)
+    list(APPEND third_party_deps extern_sleef)
+  endif()
+endif()
+if(WITH_NVSHMEM)
+  include(external/nvshmem)
+  list(APPEND third_party_deps extern_nvshmem)
+endif()
+
+# AMD ROCm overlay: FlashAttention-on-ROCm is not yet enabled in this fork.
+# Upstream gates extern_flashattn with `if(WITH_ROCM)`, but SDPA flash/mem-
+# efficient attention on ROCm routes through AOTriton / Composable Kernel, not
+# this source-level path -- that is a human-track kernel gap (owner: Nilay),
+# deliberately NOT auto-ported here. ROCM_GE_6 is true for every ROCm >= 6
+# (including the ROCm 10 build floor), so `NOT ROCM_GE_6` DISABLES
+# extern_flashattn on all supported ROCm builds -- the merge does not claim a
+# flashattn-on-ROCm port it did not implement. When the human track lands the
+# AOTriton/CK path, replace this guard rather than flipping it on.
+if(WITH_ROCM AND NOT ROCM_GE_6)
   include(external/flashattn)
   list(APPEND third_party_deps extern_flashattn)
   set(WITH_FLASHATTN ON)
@@ -581,7 +614,8 @@ if(WITH_GPU
    AND NOT WITH_ARM
    AND NOT WIN32
    AND NOT APPLE)
-  if(${CMAKE_CUDA_COMPILER_VERSION} GREATER_EQUAL 12.3)
+  if(${CMAKE_CUDA_COMPILER_VERSION} GREATER_EQUAL 12.3
+     AND ${CMAKE_CUDA_COMPILER_VERSION} LESS_EQUAL 13.0)
     foreach(arch ${NVCC_ARCH_BIN})
       if(${arch} GREATER_EQUAL 90)
         set(WITH_FLASHATTN_V3 ON)
@@ -616,25 +650,6 @@ endif()
 if(WITH_OPENVINO)
   include(external/openvino)
   list(APPEND third_party_deps extern_openvino)
-endif()
-
-string(FIND "${CUDA_ARCH_BIN}" "90" ARCH_BIN_CONTAINS_90)
-if(NOT WITH_GPU
-   OR NOT WITH_DISTRIBUTE
-   OR (ARCH_BIN_CONTAINS_90 EQUAL -1))
-  set(WITH_NVSHMEM OFF)
-endif()
-if(WITH_SLEEF
-   AND NOT WITH_ROCM
-   AND NOT WIN32)
-  include(cmake/sleef.cmake)
-  if(TARGET extern_sleef)
-    list(APPEND third_party_deps extern_sleef)
-  endif()
-endif()
-if(WITH_NVSHMEM)
-  include(external/nvshmem)
-  list(APPEND third_party_deps extern_nvshmem)
 endif()
 
 add_custom_target(third_party ALL DEPENDS ${third_party_deps})

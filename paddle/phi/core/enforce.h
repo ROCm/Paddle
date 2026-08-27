@@ -27,11 +27,8 @@ limitations under the License. */
 #include <hiprand/hiprand.h>
 #include <miopen/miopen.h>
 #include <rocblas/rocblas.h>
-// thrust headers require hipcc (rocThrust 7.0+ pulls in rocprim)
-#ifdef __HIPCC__
 #include <thrust/system/hip/error.h>
 #include <thrust/system_error.h>  // NOLINT
-#endif
 #endif
 
 #include <fstream>
@@ -98,7 +95,7 @@ std::string GetCompleteTraceBackString(StrType&& what,
 
 inline bool is_error(bool stat) { return !stat; }
 
-void ThrowWarnInternal(const std::string& message);
+PADDLE_API void ThrowWarnInternal(const std::string& message);
 
 #if defined(__CUDA_ARCH__)
 // For cuda, the assertions can affect performance and it is therefore

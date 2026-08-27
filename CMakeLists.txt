@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License
+#
+# Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.
 
 if(APPLE AND WITH_ARM)
   # cmake 3.19.2 version starts to support M1
@@ -617,6 +619,23 @@ include(third_party
 include(flags) # set paddle compile flags
 if(APPLE)
   safe_set_cxxflag(CMAKE_CXX_FLAGS "-Wno-invalid-specialization")
+endif()
+
+# On ROCm 6+ with the Clang toolchain, Paddle's own host C++ translation units
+# that transitively include thrust/complex.h (via paddle/phi/common/complex.h)
+# must be compiled in Clang HIP language mode so the CCCL fp16/bf16 math
+# overloads resolve (see cmake/hip.cmake for the full rationale, where
+# PADDLE_HOST_HIP_LANGUAGE is decided). Apply it HERE -- after include(flags),
+# so it never reaches CMake's configure-time check_*() try-compiles, and after
+# include(third_party) above, so it never leaks into the third_party
+# ExternalProjects that capture ${CMAKE_CXX_FLAGS} (protobuf, onednn). As a
+# directory property it flows only to targets added below (add_subdirectory
+# (paddle)), i.e. Paddle's own targets. Scoped to CXX so it does not perturb the
+# HIP-language (hipcc) or C compiles.
+if(PADDLE_HOST_HIP_LANGUAGE)
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-x>
+                      $<$<COMPILE_LANGUAGE:CXX>:hip>
+                      $<$<COMPILE_LANGUAGE:CXX>:-fno-gpu-rdc>)
 endif()
 include(util) # set unittest and link libs
 include(version) # set PADDLE_VERSION

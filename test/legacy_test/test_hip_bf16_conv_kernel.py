@@ -14,7 +14,7 @@
 
 """Test HIP BF16 convolution kernel registration.
 
-This test keep coverage focused on minimal convolution forward passes so the
+This test keeps coverage focused on minimal convolution forward passes so the
 suite validates kernel registration without pulling in unrelated BF16 operator
 chains.
 """

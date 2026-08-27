@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.
 
 include(ExternalProject)
 
@@ -50,6 +52,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   file(TO_NATIVE_PATH ${PADDLE_SOURCE_DIR}/patches/eigen/Complex.h.patch
        complex_header)
   set(EIGEN_PATCH_COMMAND ${EIGEN_PATCH_COMMAND} && git apply ${complex_header})
+  # AMD ROCm overlay: apply the HIPCC half-type fix (hlog/HIP_VERSION guard).
+  # Follows upstream's git-apply idiom (patches/eigen/Half.h.patch is git-format).
+  file(TO_NATIVE_PATH ${PADDLE_SOURCE_DIR}/patches/eigen/Half.h.patch
+       half_header)
+  set(EIGEN_PATCH_COMMAND ${EIGEN_PATCH_COMMAND} && git apply ${half_header})
 endif()
 
 set(EIGEN_INCLUDE_DIR ${SOURCE_DIR})

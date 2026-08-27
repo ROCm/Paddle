@@ -1,0 +1,50 @@
+diff --git a/cmake/hip.cmake b/cmake/hip.cmake
+index 9229ec8..c8febce 100644
+--- a/cmake/hip.cmake
++++ b/cmake/hip.cmake
+@@ -11,7 +11,12 @@ else()
+     set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
+     set(HIP_CLANG_PATH ${ROCM_PATH}/llvm/bin CACHE PATH "Path to which clang has been installed")
+ endif()
+-set(CMAKE_MODULE_PATH "${HIP_PATH}/cmake" ${CMAKE_MODULE_PATH})
++if(EXISTS "${HIP_PATH}/cmake")
++  set(CMAKE_MODULE_PATH "${HIP_PATH}/cmake" ${CMAKE_MODULE_PATH})
++else()
++  set(CMAKE_MODULE_PATH "${ROCM_PATH}/lib/cmake/hip" ${CMAKE_MODULE_PATH})
++  set(ROCM_GE_6 ON)
++endif()
+ 
+ find_package(HIP REQUIRED)
+ include_directories(${ROCM_PATH}/include)
+@@ -63,9 +68,17 @@ set(HIP_CLANG_FLAGS ${HIP_CXX_FLAGS})
+ # Ask hcc to generate device code during compilation so we can use
+ # host linker to link.
+ list(APPEND HIP_HCC_FLAGS -fno-gpu-rdc)
+-list(APPEND HIP_HCC_FLAGS --amdgpu-target=gfx906)
++if(ROCM_GE_6)
++  list(APPEND HIP_HCC_FLAGS --offload-arch=gfx942)
++else()
++  list(APPEND HIP_HCC_FLAGS --offload-arch=gfx906)
++endif()
+ list(APPEND HIP_CLANG_FLAGS -fno-gpu-rdc)
+-list(APPEND HIP_CLANG_FLAGS --amdgpu-target=gfx906)
++if(ROCM_GE_6)
++  list(APPEND HIP_CLANG_FLAGS --offload-arch=gfx942)
++else()
++  list(APPEND HIP_CLANG_FLAGS --offload-arch=gfx906)
++endif()
+ 
+ 
+ if(HIP_COMPILER STREQUAL clang)
+@@ -76,5 +89,9 @@ endif()
+ message(STATUS "HIP library name: ${hip_library_name}")
+ 
+ # set HIP link libs
+-find_library(ROCM_HIPRTC_LIB ${hip_library_name} HINTS ${HIP_PATH}/lib)
++if(ROCM_GE_6)
++  find_library(ROCM_HIPRTC_LIB ${hip_library_name} HINTS ${ROCM_PATH}/lib)
++else()
++  find_library(ROCM_HIPRTC_LIB ${hip_library_name} HINTS ${HIP_PATH}/lib)
++endif()
+ message(STATUS "ROCM_HIPRTC_LIB: ${ROCM_HIPRTC_LIB}")
+\ No newline at end of file
