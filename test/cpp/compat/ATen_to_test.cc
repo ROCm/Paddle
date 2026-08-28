@@ -25,6 +25,9 @@
 #include <c10/cuda/CUDAFunctions.h>
 #include <c10/cuda/CUDAGuard.h>
 #endif
+#ifdef PADDLE_WITH_XPU
+#include "paddle/phi/core/platform/device/xpu/xpu_info.h"
+#endif
 #include "ATen/ATen.h"
 #include "gtest/gtest.h"
 #include "paddle/phi/common/float16.h"
@@ -150,9 +153,9 @@ TEST(TensorToTest, ToCopyAndUnsupportedDeviceBranches) {
                            std::nullopt);
   EXPECT_TRUE(pinned.equal(t));
 
-  EXPECT_THROW(
-      t.to(at::TensorOptions().device(c10::Device(c10::DeviceType::XPU, 0))),
-      ::std::exception);
+  EXPECT_THROW(t.to(at::TensorOptions().device(
+                   c10::Device(static_cast<c10::DeviceType>(-1), 0))),
+               ::std::exception);
 }
 
 // ---- Overload 3: to(Device, ScalarType) ----
@@ -227,5 +230,51 @@ TEST(TensorToTest, ToDevice_GPUToCPU) {
 
   ASSERT_EQ(result.device().type(), c10::DeviceType::CPU);
   ASSERT_NEAR(result.item<float>(), 7.0f, 1e-5f);
+}
+
+TEST(TensorToTest, ToDeviceWithoutIndexUsesCurrentCudaDevice) {
+  if (c10::cuda::device_count() < 2) {
+    return;
+  }
+  c10::cuda::CUDAGuard guard(1);
+  at::Tensor t = at::tensor({5.0f}, at::kFloat);
+  at::Tensor result = t.to(c10::Device(c10::kCUDA),
+                           at::kFloat,
+                           /*non_blocking=*/false,
+                           /*copy=*/false);
+
+  ASSERT_EQ(result.device().type(), c10::DeviceType::CUDA);
+  ASSERT_EQ(result.device().index(), 1);
+}
+#endif
+
+#ifdef PADDLE_WITH_XPU
+TEST(TensorToTest, ToDevice_CPUToXPU) {
+  if (paddle::platform::GetXPUDeviceCount() == 0) {
+    return;
+  }
+  at::Tensor t = at::tensor({5.0f}, at::kFloat);
+  at::Tensor result = t.to(c10::Device(c10::kXPU, 0),
+                           at::kFloat,
+                           /*non_blocking=*/false,
+                           /*copy=*/false);
+
+  ASSERT_EQ(result.device().type(), c10::DeviceType::XPU);
+  ASSERT_EQ(result.device().index(), 0);
+}
+
+TEST(TensorToTest, ToDeviceWithoutIndexUsesCurrentXpuDevice) {
+  if (paddle::platform::GetXPUDeviceCount() < 2) {
+    return;
+  }
+  paddle::platform::XPUDeviceGuard guard(1);
+  at::Tensor t = at::tensor({5.0f}, at::kFloat);
+  at::Tensor result = t.to(c10::Device(c10::kXPU),
+                           at::kFloat,
+                           /*non_blocking=*/false,
+                           /*copy=*/false);
+
+  ASSERT_EQ(result.device().type(), c10::DeviceType::XPU);
+  ASSERT_EQ(result.device().index(), 1);
 }
 #endif

@@ -1599,6 +1599,10 @@ void FFTR2CInferMeta(const MetaTensor& x,
   }
 }
 
+void FlashMaskGetUniqueIdInferMeta(const MetaTensor& x, MetaTensor* out) {
+  out->share_meta(x);
+}
+
 void FlattenWithXShapeInferMeta(const MetaTensor& x,
                                 int start_axis,
                                 int stop_axis,
@@ -2154,12 +2158,6 @@ void Fp8QuantBlockwiseInferMeta(const MetaTensor& X,
 
   const int64_t rows = x_dims[0];
   const int64_t cols = x_dims[1];
-  PADDLE_ENFORCE_LE(rows,
-                    65535 * 128,
-                    common::errors::InvalidArgument(
-                        "Currently only supports the first dim of "
-                        "Input(X) <= 65535 * 128, but got %d",
-                        rows));
 
   PADDLE_ENFORCE_EQ(
       cols % 4,

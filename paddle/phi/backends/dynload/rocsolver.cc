@@ -10,7 +10,9 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. */
+limitations under the License.
+
+Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved. */
 
 #include "paddle/phi/backends/dynload/rocsolver.h"
 
@@ -23,6 +25,12 @@ void *rocsolver_dso_handle;
 
 ROCSOLVER_ROUTINE_EACH(DEFINE_WRAP);
 
+// AMD ROCm overlay: guard EACH1 -- rocsolver.h only defines
+// ROCSOLVER_ROUTINE_EACH1 for HIP_VERSION >= 50300000, so the unguarded
+// upstream form fails to compile on older HIP. The guard is compatible with
+// upstream's intent on ROCm 6+ and safe on older toolchains.
+#ifdef ROCSOLVER_ROUTINE_EACH1
 ROCSOLVER_ROUTINE_EACH1(DEFINE_WRAP);
+#endif
 
 }  // namespace phi::dynload

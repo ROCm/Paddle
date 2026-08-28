@@ -1038,10 +1038,12 @@ inline void Blas<GPUContext>::GEMM(CBLAS_TRANSPOSE transA,
           "but received %d",
           dev_ctx_.GetComputeCapability()));
 
-  // Use rocblas complex types directly to avoid pulling
-  // in rocprim via thrust/complex.h in non-hipcc builds.
-  rocblas_float_complex c_alpha = {alpha.real, alpha.imag};
-  rocblas_float_complex c_beta = {beta.real, beta.imag};
+  // ROCm: rocblas_gemm_ex takes alpha/beta as const void* and reads them as
+  // rocblas_float_complex ({real,imag} floats) per the f32_c compute type. phi::complex64
+  // has that exact layout and is host-safe, so use it directly instead of thrust::complex
+  // (thrust/complex.h cannot compile in the HOST .cc TUs that transitively pull this header).
+  phi::complex64 c_alpha = alpha;
+  phi::complex64 c_beta = beta;
 
   auto &cuda_ctx = const_cast<GPUContext &>(dev_ctx_);
   CUBlas<phi::complex64>::GEMM_EX(&cuda_ctx,
@@ -1100,10 +1102,10 @@ inline void Blas<GPUContext>::GEMM(CBLAS_TRANSPOSE transA,
           "but received %d",
           dev_ctx_.GetComputeCapability()));
 
-  // Use rocblas complex types directly to avoid pulling
-  // in rocprim via thrust/complex.h in non-hipcc builds.
-  rocblas_double_complex c_alpha = {alpha.real, alpha.imag};
-  rocblas_double_complex c_beta = {beta.real, beta.imag};
+  // ROCm: see the complex64 GEMM above -- phi::complex128 has the rocblas_double_complex
+  // layout and is host-safe; avoids thrust::complex in host-reachable TUs.
+  phi::complex128 c_alpha = alpha;
+  phi::complex128 c_beta = beta;
 
   auto &cuda_ctx = const_cast<GPUContext &>(dev_ctx_);
   CUBlas<phi::complex128>::GEMM_EX(&cuda_ctx,
