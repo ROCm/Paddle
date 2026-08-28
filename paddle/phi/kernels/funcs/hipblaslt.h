@@ -18,6 +18,14 @@ limitations under the License. */
 #include "paddle/phi/core/dense_tensor.h"
 
 namespace phi {
+#if HIP_VERSION >= 60000000
+#define HIP_DATATYPE_R_32I HIP_R_32I
+#define HIP_DATATYPE_R_8I HIP_R_8I
+#define HIP_DATATYPE_R_32F HIP_R_32F
+#define HIP_DATATYPE_R_16BF HIP_R_16BF
+#define HIP_DATATYPE_R_16F HIP_R_16F
+#endif
+
 class CublasLtHelper {
  public:
   CublasLtHelper(int m, int k, int n, hipblasLtHandle_t handle)

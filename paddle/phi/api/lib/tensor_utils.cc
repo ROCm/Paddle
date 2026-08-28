@@ -10,7 +10,9 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. */
+limitations under the License.
+
+Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved. */
 
 #include "paddle/phi/api/include/tensor_utils.h"
 #include "glog/logging.h"
@@ -44,8 +46,11 @@ PADDLE_API phi::Place GetPlaceFromPtr(void* data) {
 #else
   hipPointerAttribute_t attr = {};
   hipError_t status = hipPointerGetAttributes(&attr, data);
-  // ROCm 7.0+ uses 'type' instead of 'memoryType'
+#if HIP_VERSION >= 60000000
   if (status == hipSuccess && attr.type == hipMemoryTypeDevice) {
+#else
+  if (status == hipSuccess && attr.memoryType == hipMemoryTypeDevice) {
+#endif
     return phi::GPUPlace(attr.device);
   }
 #endif
