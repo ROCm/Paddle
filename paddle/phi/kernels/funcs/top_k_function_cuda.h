@@ -47,7 +47,16 @@ inline static size_t round_up(size_t n, size_t q) {
 }
 
 #ifdef __HIPCC__
-#include "paddle/phi/kernels/funcs/rocprim_traits.h"
+// ROCm 10.1 removed the internal rocprim::detail::radix_key_codec_base /
+// radix_key_codec_integral API; custom key types now register via the public
+// rocprim::traits::define<> interface (rocprim/type_traits.hpp). Register
+// phi::float16 and phi::bfloat16 as floating-point keys so rocPRIM radix sort
+// orders them correctly. The floating-point codec keys on the sign bit of the
+// float_bit_mask (sign/exponent/mantissa bit masks), matching the sign-flip
+// ordering the old radix_key_codec_integral<T, uint16_t> provided. The masks
+// mirror rocprim::half (0x8000/0x7C00/0x03FF) and rocprim::bfloat16
+// (0x8000/0x7F80/0x007F).
+
 namespace cub = hipcub;
 #else
 // set cub base traits in order to handle float16
