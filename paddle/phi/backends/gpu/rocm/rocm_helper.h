@@ -1,4 +1,5 @@
 // Copyright (c) 2019 PaddlePaddle Authors. All Rights Reserved.
+// Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +24,13 @@
 #include "paddle/phi/common/data_type.h"
 #include "paddle/phi/common/float16.h"
 #include "paddle/phi/core/enforce.h"
-#if HIP_VERSION >= 60000000
+// AMD ROCm overlay: on ROCm 6.0.x (before HIP 6.1) hipblasLt lacked the
+// constexpr hipDataType aliases below, so define them as macros for that
+// narrow window only. From HIP 6.1 onward (including the ROCm 10 build floor)
+// the upstream constexpr block just below provides these names -- guarding
+// this macro block to < 6.1 avoids rewriting those constexpr declarations
+// into a redeclaration of the unscoped hipDataType enumerators.
+#if HIP_VERSION >= 60000000 && HIP_VERSION < 60100000
 typedef hipDataType hipDataType_t;
 
 #define HIP_DATATYPE_R_32I HIP_R_32I

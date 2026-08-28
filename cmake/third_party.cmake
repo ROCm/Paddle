@@ -1,4 +1,5 @@
 # Copyright (c) 2018 PaddlePaddle Authors. All Rights Reserved.
+# Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -598,9 +599,12 @@ endif()
 # Upstream gates extern_flashattn with `if(WITH_ROCM)`, but SDPA flash/mem-
 # efficient attention on ROCm routes through AOTriton / Composable Kernel, not
 # this source-level path -- that is a human-track kernel gap (owner: Nilay),
-# deliberately NOT auto-ported here. Keep the fork's `NOT ROCM_6` guard so the
-# merge does not claim a flashattn-on-ROCm port it did not implement.
-if(WITH_ROCM AND NOT ROCM_6)
+# deliberately NOT auto-ported here. ROCM_GE_6 is true for every ROCm >= 6
+# (including the ROCm 10 build floor), so `NOT ROCM_GE_6` DISABLES
+# extern_flashattn on all supported ROCm builds -- the merge does not claim a
+# flashattn-on-ROCm port it did not implement. When the human track lands the
+# AOTriton/CK path, replace this guard rather than flipping it on.
+if(WITH_ROCM AND NOT ROCM_GE_6)
   include(external/flashattn)
   list(APPEND third_party_deps extern_flashattn)
   set(WITH_FLASHATTN ON)

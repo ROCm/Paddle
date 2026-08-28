@@ -1,4 +1,5 @@
 /* Copyright (c) 2022 PaddlePaddle Authors. All Rights Reserved.
+Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -18,7 +19,14 @@ limitations under the License. */
 #include "paddle/phi/core/dense_tensor.h"
 
 namespace phi {
-#if HIP_VERSION >= 60000000
+// AMD ROCm overlay: on ROCm 6.0.x (before HIP 6.1) hipblasLt lacked the
+// constexpr hipDataType aliases, so define them as macros for that narrow
+// window only. From HIP 6.1 onward (including the ROCm 10 build floor) the
+// aliases exist -- guarding this macro block to < 6.1 keeps it consistent with
+// rocm_helper.h and avoids rewriting any constexpr HIP_DATATYPE_R_* declaration
+// (should both headers ever co-occur in a translation unit) into a
+// redeclaration of the unscoped hipDataType enumerators.
+#if HIP_VERSION >= 60000000 && HIP_VERSION < 60100000
 #define HIP_DATATYPE_R_32I HIP_R_32I
 #define HIP_DATATYPE_R_8I HIP_R_8I
 #define HIP_DATATYPE_R_32F HIP_R_32F

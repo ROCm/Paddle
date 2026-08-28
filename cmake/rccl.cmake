@@ -1,3 +1,5 @@
+# Modifications Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.
+
 if(NOT WITH_ROCM)
   return()
 endif()
@@ -8,7 +10,7 @@ if(WIN32)
 endif()
 
 if(WITH_RCCL)
-  if(ROCM_6)
+  if(ROCM_GE_6)
     set(RCCL_INCLUDE_DIR ${ROCM_PATH}/include/rccl)
   else()
     set(RCCL_ROOT
