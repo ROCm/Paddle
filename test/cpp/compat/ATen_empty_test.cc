@@ -15,9 +15,17 @@
 #include <ATen/Functions.h>
 #include <ATen/core/TensorBody.h>
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/EmptyTensor.h>
 #include <ATen/ops/empty.h>
 #include <c10/core/ScalarType.h>
 #include <c10/core/TensorOptions.h>
+#if defined(PADDLE_WITH_CUDA) || defined(PADDLE_WITH_HIP)
+#include <c10/cuda/CUDAFunctions.h>
+#include <c10/cuda/CUDAGuard.h>
+#endif
+#ifdef PADDLE_WITH_XPU
+#include "paddle/phi/core/platform/device/xpu/xpu_info.h"
+#endif
 
 #include "ATen/ATen.h"
 #include "gtest/gtest.h"
@@ -114,4 +122,54 @@ TEST(ATenEmptyTest, PinnedTensorDataPtrNonNull) {
   ASSERT_NE(t.data_ptr(), nullptr);
 }
 
+TEST(ATenEmptyTest, DefaultCudaDeviceUsesCurrentDevice) {
+  if (c10::cuda::device_count() < 2) {
+    return;
+  }
+  c10::cuda::CUDAGuard guard(1);
+  at::Tensor t =
+      at::empty({8}, at::TensorOptions().dtype(at::kFloat).device(at::kCUDA));
+
+  ASSERT_TRUE(t.is_cuda());
+  ASSERT_EQ(t.device().index(), 1);
+}
+
+TEST(ATenEmptyTest, EmptyCudaHelperDefaultDeviceUsesCurrentDevice) {
+  if (c10::cuda::device_count() < 2) {
+    return;
+  }
+  c10::cuda::CUDAGuard guard(1);
+  at::Tensor t = at::detail::empty_cuda(
+      {8}, at::kFloat, at::Device(at::kCUDA), std::nullopt);
+
+  ASSERT_TRUE(t.is_cuda());
+  ASSERT_EQ(t.device().index(), 1);
+}
+
+TEST(ATenEmptyTest, EmptyCudaOptionsHelperDefaultDeviceUsesCurrentDevice) {
+  if (c10::cuda::device_count() < 2) {
+    return;
+  }
+  c10::cuda::CUDAGuard guard(1);
+  at::Tensor t = at::detail::empty_cuda(
+      {8}, at::TensorOptions().dtype(at::kFloat).device(at::kCUDA));
+
+  ASSERT_TRUE(t.is_cuda());
+  ASSERT_EQ(t.device().index(), 1);
+}
+
 #endif  // PADDLE_WITH_CUDA || PADDLE_WITH_HIP
+
+#ifdef PADDLE_WITH_XPU
+TEST(ATenEmptyTest, DefaultXpuDeviceUsesCurrentDevice) {
+  if (paddle::platform::GetXPUDeviceCount() < 2) {
+    return;
+  }
+  paddle::platform::XPUDeviceGuard guard(1);
+  at::Tensor t =
+      at::empty({8}, at::TensorOptions().dtype(at::kFloat).device(at::kXPU));
+
+  ASSERT_EQ(t.device().type(), c10::DeviceType::XPU);
+  ASSERT_EQ(t.device().index(), 1);
+}
+#endif

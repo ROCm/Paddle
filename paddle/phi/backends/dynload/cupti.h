@@ -13,6 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 #pragma once
 
+// CUDA-only dynload wrapper: ROCm uses the hip counterpart (hippti.h). Guard the whole body so the ROCm build does not pull the (absent) CUDA header.
+#ifdef PADDLE_WITH_CUDA
+
 #ifdef PADDLE_WITH_CUPTI
 
 #include <cuda.h>
@@ -109,3 +112,4 @@ CUPTI_ROUTINE_EACH(DECLARE_DYNAMIC_LOAD_CUPTI_WRAP);
 }  // namespace phi
 
 #endif  // PADDLE_WITH_CUPTI
+#endif  // PADDLE_WITH_CUDA

@@ -13,6 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 #pragma once
 
+// CUDA-only dynload wrapper: ROCm uses the hip counterpart (hipsolver.h). Guard the whole body so the ROCm build does not pull the (absent) CUDA header.
+#ifdef PADDLE_WITH_CUDA
+
 #include <cuda.h>
 #include <cusolverDn.h>
 
@@ -137,3 +140,4 @@ CUSOLVER_ROUTINE_EACH(DECLARE_DYNAMIC_LOAD_CUSOLVER_WRAP);
 #undef DECLARE_DYNAMIC_LOAD_CUSOLVER_WRAP
 }  // namespace dynload
 }  // namespace phi
+#endif  // PADDLE_WITH_CUDA

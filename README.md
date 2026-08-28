@@ -76,6 +76,56 @@ We provide [English](https://www.paddlepaddle.org.cn/documentation/docs/en/guide
 * Community Blog: <https://pfcc.blog/>
 * See more details about PaddlePaddle community at [community](https://github.com/PaddlePaddle/community).
 
+## Runs on AMD Instinct (ROCm)
+
+This branch (`hipshift-port`) is the AMD ROCm port of PaddlePaddle, validated on AMD Instinct GPUs under ROCm 10.1.
+
+### Validated configurations
+
+| PaddlePaddle | ROCm | OS | Python | GPU |
+|---|---|---|---|---|
+| 3.4.0.dev20260825 | 10.1 (manylinux2.28) | manylinux2.28 (RHEL8.10) | 3.11 | MI300X (gfx942:sramecc+:xnack-) |
+| 3.4.0.dev20260825 | 10.1 (manylinux2.28) | manylinux2.28 (RHEL8.10) | 3.11 | MI350X/MI355X (gfx950:sramecc+:xnack-) |
+
+### Install on AMD Instinct
+
+```bash
+# Inside the ROCm 10.1 manylinux container:
+# export LD_LIBRARY_PATH=/opt/rocm/lib/llvm/lib:/opt/rocm/lib:${LD_LIBRARY_PATH:-}
+pip install amd-paddlepaddle \
+  --extra-index-url https://repo.amd.com/rocm/whl-multi-arch/rocm10.1/
+```
+
+### Build from source (ROCm)
+
+```bash
+cmake .. -DWITH_ROCM=ON -DWITH_GPU=OFF -DWITH_TESTING=ON \
+  -DPY_VERSION=3.11 \
+  -DCMAKE_HIP_ARCHITECTURES="gfx942:sramecc+:xnack-" \
+  -DAMDGPU_TARGETS="gfx942:sramecc+:xnack-" \
+  -DGPU_ARCHS="gfx942:sramecc+:xnack-"
+make -j"$(nproc)"
+```
+
+**Use feature-qualified target-ids** (`gfx942:sramecc+:xnack-` / `gfx950:sramecc+:xnack-`). Bare arch names (`gfx942`, `gfx950`) cause `hipErrorInvalidImage` on `sramecc+` devices at runtime. Get yours from `rocminfo | grep 'amdhsa--gfx'`.
+
+### Verify
+
+```python
+import paddle
+assert paddle.device.is_compiled_with_rocm()
+paddle.set_device('gpu:0')
+a = paddle.randn([512, 512])
+print("ROCm GPU matmul:", float((a @ a).abs().mean()))  # should be a finite positive float
+```
+
+### Key GPU surfaces migrated (ROCm 10.1 sync)
+
+- `KeMatrixTopK` -- wave64 fix: ceil-divide per-warp shared array (avoids zero-length on `WARP_SIZE=64`)
+- `elementwise_activation` -- feature-qualified target-id required for gfx950; bare arch causes `hipErrorInvalidImage`
+- `thrust_compat.h` -- rocPRIM `traits::define<>` for fp16/bf16 radix sort (ROCm 10.1 API)
+- `patches/thrust` overlay -- cmake probing skips NVCC-specific overlay; ROCm links native `thrust::shuffle`
+
 ## Copyright and License
 
 PaddlePaddle is provided under the [Apache-2.0 license](LICENSE).

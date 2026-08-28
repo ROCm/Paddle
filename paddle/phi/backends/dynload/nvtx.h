@@ -12,6 +12,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 #pragma once
+
+// CUDA-only dynload wrapper: ROCm uses the hip counterpart (hipnvtx.h). Guard the whole body so the ROCm build does not pull the (absent) CUDA header.
+#ifdef PADDLE_WITH_CUDA
 #ifndef _WIN32
 #include <cuda.h>
 #ifndef NVTX_SUPPRESS_V2_DEPRECATION_WARNING
@@ -81,3 +84,4 @@ NVTX_ROUTINE_EACH(DECLARE_DYNAMIC_LOAD_NVTX_WRAP);
 }  // namespace dynload
 }  // namespace phi
 #endif
+#endif  // PADDLE_WITH_CUDA
